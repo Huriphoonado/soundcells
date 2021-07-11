@@ -21,9 +21,10 @@ $ npm install
 ```
 
 ## Run
-To run the Flask app locally:
+To run the Flask app locally in development/debug mode:
 
 ```bash
+$ export FLASK_ENV=development
 $ python -m flask run
 ```
 
