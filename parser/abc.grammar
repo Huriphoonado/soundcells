@@ -1,0 +1,74 @@
+@precedence { dotted @left }
+@top Program { (lineWithNewline | emptyLine)* lineWithoutNewline?  }
+
+lineWithNewline { expression newline }
+lineWithoutNewline { expression }
+emptyLine { newline }
+
+expression { music | Metadata }
+
+Metadata {
+    Composer |
+    KeySignature |
+    NoteLength |
+    Tempo |
+    TimeSignature |
+    Title |
+    TuneNumber
+}
+
+Composer { "C:" text }
+KeySignature { "K:" key }
+NoteLength { "L:" number }
+Tempo { "Q:" string? (frac (frac)* '=')? int string? }
+TimeSignature { "M:" number }
+Title { "T:" text }
+TuneNumber { "X:" int }
+
+music { Barline | Barline? pattern+ }
+pattern { '(' | ')' | DottedRhythm | event | event Barline }
+
+DottedRhythm { event !dotted ('>' | '<') event }
+
+event { Note | Rest | Chord }
+
+Chord {"[" Note+ "]"}
+Note {accidental? pitch (number? octave? | octave? number?) }
+
+Rest { 'z' number?}
+
+Barline {
+    '|'  |
+    '||' |
+    ':|' |
+    '|:' |
+    '|]' |
+    ':||:'
+}
+
+@tokens {
+    char { ![ \t\n\r%] }
+
+    string { '"' (char | whitespace)* '"' }
+    text { char+ | char+ (char | whitespace)+ char+ }
+
+    Comment { '%' ![\n\r]* }
+
+    int { '0' | $[1-9] std.digit* }
+    frac {$[1-9] std.digit* whitespace* '/' whitespace* $[1-9] std.digit* }
+    number { int | frac }
+    @precedence {frac, int}
+
+    pitch { $[abcdefgABCDEFG] }
+    key { pitch ('b' | '#')? }
+    accidental { '_'+ | '=' | '^'+ }
+    octave { $[,']+ }
+
+    newline { $[\n\r]+ }
+    whitespace { $[ \t]+ }
+
+    "[" "]"
+    "(" ")"
+}
+
+@skip {whitespace | Comment}

@@ -36,5 +36,10 @@ $ npm run watch
 
 This combines the code written in the source folder with modules installed to all to one file `bundle.js` which ends up in the Flask static directory. In `webpack.config.js` make sure that we are in development mode while making changes and in production mode when deploying.
 
+### Parser
+```bash
+parser $ ../node_modules/.bin/lezer-generator abc.grammar -o ../src/js/abc_grammar.js 
+```
+
 ## Resources
 I could not figure out a clean way to use ES5 require statements and modules installed with npm along with Flask (hence the need for two calls during development). I tried using [Flask-Assets](https://flask-assets.readthedocs.io/en/latest/), but there was only support for minification and not for bundling files included with require. I looked into creating a [custom filter](https://webassets.readthedocs.io/en/latest/custom_filters.html) and found an [example with esbuild that looked promising](https://haliphax.dev/2020/09/minifying-javascript-using-esbuild-with-flask-assets/), but kept repeatedly getting an error message. The current solution is based on this [2017 blog post](https://github.com/jrybicki-jsc/flasknpm).
