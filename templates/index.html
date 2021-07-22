@@ -2,11 +2,20 @@
 <html lang="en">
 <head>
     <title>Sound Cells</title>
+    <style>
+    .cm-editor * {
+        font-size: 18px ;
+    }
+    </style>
+
 </head>
 <body>
-    <h1>Hello World...</h1>
+    <h1>Sound Cells</h1>
     <div id="editor"></div>
+    <div id="errors"></div>
+    <div id="info"></div>
     <div id="score"></div>
+    <div id="braille"></div>
 
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='bundle.js') }}"></script>

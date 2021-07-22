@@ -28,14 +28,14 @@ TuneNumber { "X:" int }
 music { Barline | Barline? pattern+ }
 pattern { '(' | ')' | DottedRhythm | event | event Barline }
 
-DottedRhythm { event !dotted ('>' | '<') event }
+DottedRhythm { event !dotted Dot event }
 
 event { Note | Rest | Chord }
 
-Chord {"[" Note+ "]"}
-Note {accidental? pitch (number? octave? | octave? number?) }
+Chord { "[" Note+ "]" }
+Note {Accidental? Pitch (Duration? Octave? | Octave? Duration?) }
 
-Rest { 'z' number?}
+Rest { 'z' Duration?}
 
 Barline {
     '|'  |
@@ -59,15 +59,18 @@ Barline {
     number { int | frac }
     @precedence {frac, int}
 
-    pitch { $[abcdefgABCDEFG] }
-    key { pitch ('b' | '#')? }
-    accidental { '_'+ | '=' | '^'+ }
-    octave { $[,']+ }
+    pitchLetter { $[abcdefgABCDEFG] }
+    key { pitchLetter ('b' | '#')? ('m')? }
+
+    Pitch { pitchLetter }
+    Accidental { '_'+ | '=' | '^'+ }
+    Octave { $[,']+ }
+    Duration { number }
+    Dot { '<'+ | '>'+ }
 
     newline { $[\n\r]+ }
     whitespace { $[ \t]+ }
 
-    "[" "]"
     "(" ")"
 }
 

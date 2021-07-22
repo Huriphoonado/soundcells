@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@codemirror/basic-setup": "^0.18.2",
-    "opensheetmusicdisplay": "^1.0.0"
+    "opensheetmusicdisplay": "^1.0.0",
+    "tone": "^14.7.77"
   }
 }
