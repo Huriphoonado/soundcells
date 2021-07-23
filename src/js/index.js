@@ -14,7 +14,7 @@ import {ABC} from "./abc_language.js"
 import {ScoreHandler} from "./score_handler.js";
 
 // Variables
-const starterABC = 'X: 1\nT: Great Music\nK: C\nL: 1/4\nM: 4/4\nABcd|]';
+const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n|ABcd|]';
 const scoreHandler = new ScoreHandler();
 
 let timer; // Only send to flask server at a max interval
@@ -34,16 +34,39 @@ let startState = EditorState.create({
         ABC(),
         EditorView.updateListener.of((v) => {
             let treeCursor = view.state.tree.cursor();
-
             if(v.docChanged) {
                 let output = scoreHandler.generateScoreStructure(treeCursor, view.state);
+
+                // Only post after groups of changes
                 if (timer) clearTimeout(timer);
-                timer = setTimeout(() => {
-                    sendABC(output.abc) // messy
-                }, 500 );
+                timer = setTimeout(() => sendABC(output.abc), 500 );
             }
-            showPosition(view.state.selection, scoreHandler);
-        })
+
+            // Functions to be called after generateScoreStructure
+            let currentPosition = scoreHandler.updatePosition(view.state.selection);
+            showPosition(currentPosition);
+
+            // Better way to do this? Keymap functions are called before the
+            // view is updated so this checks the insertion
+            if ((v.changes.inserted.length == 2)) {
+                let inserted = v.changes.inserted[1].text[0];
+                if (inserted.length == 1 &&
+                "abcdefgABCDEFG,'_^0123456789".split("").includes(inserted)) {
+                    scoreHandler.playNote();
+                }
+            }
+        }),
+        // keymap.of(
+        //     "abcdefgABCDEFG".split("").map(l => {
+        //         return {
+        //             key: l,
+        //             run() {
+        //                 scoreHandler.playNote();
+        //                 return false;
+        //             }
+        //         }
+        //     })
+        // )
     ],
 });
 
@@ -75,20 +98,18 @@ const sendABC = (abcCode) => {
 }
 sendABC(starterABC);
 
-let showPosition = function(selection, scoreHandler) {
+const showPosition = function(currentPosition) {
     let outputString = "";
-    if (scoreHandler.scoreStructure) {
-        let results = scoreHandler.getElementByPosition(selection);
-        if (results.measures.length) {
-            let m = results.measures[0];
-            outputString += `Measure ${m.measure} (${m.comment}) -- `;
-        }
-        if (results.events.length) {
-            let ev = results.events[0];
-            let note = ev.scientificNotation.note ? ev.scientificNotation.note : 'rest';
-            let ticks = ev.scientificNotation.tick
-            outputString += `Note ${note}, ${ticks} tick(s).`;
-        }
+
+    if (currentPosition.measures.length) {
+        let m = currentPosition.measures[0];
+        outputString += `Measure ${m.measure} (${m.comment}) -- `;
+    }
+    if (currentPosition.events.length) {
+        let ev = currentPosition.events[0];
+        let note = ev.scientificNotation.note ? ev.scientificNotation.note : 'rest';
+        let ticks = ev.scientificNotation.tick
+        outputString += `Note ${note}, ${ticks} tick(s).`;
     }
     document.getElementById('info').innerHTML = outputString;
 }

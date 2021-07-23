@@ -32,7 +32,7 @@ def getuserinput():
             # abcFormat.translate.abcToStreamScore(newABC)
 
             abcTextSample = converter.parse(data, format='abc')
-            abcTextSample.show('text')
+            # abcTextSample.show('text')
 
             mxml = musicxml.m21ToXml.GeneralObjectExporter(abcTextSample).parse().decode('utf-8').strip()
             braille = translate.objectToBraille(abcTextSample)

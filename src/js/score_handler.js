@@ -1,5 +1,9 @@
+import * as Tone from 'tone';
+
 import TinyTheory from './tiny_theory';
 
+// Data structure that tracks the state of the document and represents the score
+// Contains a synthesizer for playback
 class ScoreHandler {
     constructor() {
         this.default = {
@@ -11,11 +15,16 @@ class ScoreHandler {
                 M: "4/4",
                 Q: "120"
             },
-            music: "z4 |]"
+            music: "| z4 |]"
         }
 
         this.scoreStructure = [];
         this.errorList = [];
+
+        this.currentPosition = {measures: [], events: []};
+
+        this.synth = setupSynth();
+        this.audioStarted = false;
     }
 
     // Iterates through a syntax tree and generates an event list
@@ -56,7 +65,7 @@ class ScoreHandler {
 
         let unfinishedMeasure = false;
         let section = 0;
-        let measureCount = 1;
+        let measureCount = 0;
         let currentMeasure;
         console.log(flatList);
         flatList.forEach((o, i) => {
@@ -81,8 +90,18 @@ class ScoreHandler {
 
             // Music
             else {
-                // No notes yet - create a new measure list
-                if (newStructure[section].measures == undefined) {
+                // No notes at all - Create an optional pickup measure
+                if (newStructure[0].measures == undefined) {
+                    newStructure[section].measures = [];
+                    newStructure[section].measures.push({
+                        measure: 0,
+                        barlines: [],
+                        position: [0],
+                        events: [],
+                    });
+                }
+                // No notes in the current section
+                else if (newStructure[section].measures == undefined) {
                     newStructure[section].measures = [];
                     if (unfinishedMeasure) {
                         newStructure[section].measures.push(unfinishedMeasure);
@@ -102,7 +121,7 @@ class ScoreHandler {
                 if (o.name == 'Barline') {
                     currentMeasure.barlines.push(o.rawText);
                     currentMeasure.position.push(o.position[0]);
-                    if (!(measureCount == 1 &&
+                    if (!(measureCount == 0 &&
                           currentMeasure.position.length == 0)) {
                           measureCount += 1;
                           newStructure[section].measures.push({
@@ -116,7 +135,7 @@ class ScoreHandler {
                 // The first measure may not have a left barline so use
                 // the position of the first element
                 else {
-                    if (measureCount == 1 &&
+                    if (measureCount == 0 &&
                         currentMeasure.position.length == 0) {
                         currentMeasure.position.push(o.position[0]);
                     }
@@ -130,8 +149,8 @@ class ScoreHandler {
             newStructure.slice(-1)[0].measures = [unfinishedMeasure];
         }
 
-        // Algorithm Limitation - Each barline adds an empty measure
-        // Meaning, the final barline
+        // Algorithm Limitation - Each barline starts a new measure
+        // Meaning, the final barline comes with a new empty measure
         // If the last list of events is empty - remove it
         if (newStructure.slice(-1)[0].measures) {
             let lastMeasure = newStructure.slice(-1)[0].measures.slice(-1)[0];
@@ -153,55 +172,59 @@ class ScoreHandler {
                         m.duration += e.scientificNotation.measureFrac;
                     })
                     m.isComplete = (m.duration == 1);
-                    m.comment = m.duration > 1 ? 'Too many events.'
-                              : m.duration < 1 ? 'Too few events.'
-                              : m.position.length < 2 ? 'Missing right barline.'
-                              : 'Valid.'
+                    m.comment = m.measure == 0 ? 'Pickup'
+                              : m.duration > 1 ? 'Overfilled'
+                              : m.duration < 1 ? 'Underfilled'
+                              : m.position.length < 2 ? 'No right barline'
+                              : 'Valid'
                 });
             }
         });
 
-        // If any music arrays are empty add the default blank line
-
         this.scoreStructure = newStructure;
-        console.log(this.getABCOutput());
-        return {abc: this.getABCOutput(), errorList: this.errors};
+        console.log(this.scoreStructure);
+
+        return { abc: this.getABCOutput(),errorList: this.errors };
     }
 
     addError(obj) { this.errorList.push(obj); }
 
-    getElementByPosition(selection) {
-        let result = {measures: [], events: []};
-        if (!this.scoreStructure) return result;
+    // Returns an object containing the current measure and event that the
+    // cursor is on - both properties may be empty
+    updatePosition(selection) {
+        this.currentPosition = {measures: [], events: []};
+        if (!this.hasNotes()) return this.currentPosition;
 
-        let from = selection.ranges[0].from; // works only for single range
-        let to = selection.ranges[0].to;
-        let allMeasures = [];
-        let allEvents = [];
-        let allNotes = this.scoreStructure.forEach(section => {
-            section.measures.forEach(measure => {
-                allMeasures.push(measure);
-                measure.events.forEach(ev => allEvents.push(ev));
+        try {
+            let from = selection.ranges[0].from; // works only for single range
+            let to = selection.ranges[0].to;
+            let allMeasures = [];
+            let allEvents = [];
+            let allNotes = this.scoreStructure.forEach(section => {
+                section.measures.forEach(measure => {
+                    allMeasures.push(measure);
+                    measure.events.forEach(ev => allEvents.push(ev));
+                });
             });
-        });
 
-        let measures = allMeasures.filter(m => {
-            let start = m.position[0];
-            let end = m.position[1] ? m.position[1]
-                    : m.events.slice(-1)[0].position[1];
-            return (from > start && to <= end);
-        })
+            this.currentPosition.measures = allMeasures.filter(m => {
+                let start = m.position[0];
+                let end = m.position[1] ? m.position[1]
+                        : m.events.slice(-1)[0].position[1];
+                return (from > start && to <= end);
+            })
 
-        let events = allEvents.filter(ev => {
-            let start = ev.position[0];
-            let end = ev.position[1];
-            return (from > start && to <= end); // Does not work for highlighting
-        });
-        result.measures = measures;
-        result.events = events;
-
-        return result;
+            this.currentPosition.events = allEvents.filter(ev => {
+                let start = ev.position[0];
+                let end = ev.position[1];
+                return (from > start && to <= end); // Does not work for highlighting
+            });
+        }
+        catch(e) { console.log(e); }
+        finally { return this.currentPosition }
     }
+
+    getCurrentPosition() { return this.currentPosition }
 
     // Iterate through the store structure and generate an error-free
     // score string
@@ -228,11 +251,36 @@ class ScoreHandler {
         return abcOutput;
     }
 
-    // Check if the user has written any notes or barlines
+    // Check if the user has written any notes
     hasNotes() {
         if (!this.scoreStructure) return false;
+        if (!this.scoreStructure[0]) return false;
         if (!this.scoreStructure[0].measures) return false;
-        return (this.scoreStructure)
+        if (!this.scoreStructure[0].measures[0].events) return false;
+        return true;
+    }
+
+    playNote() {
+        if (!this.audioStarted) return this.startAudio().then(this.playNote());
+        let evList = this.getCurrentPosition().events;
+        if (evList.length == 0) return;
+        let ev = evList[0]; // Could support higlighted group
+
+        if (ev.name == 'Note' || ev.name == 'Chord') {
+            let note = ev.scientificNotation.note;
+            let duration = ev.scientificNotation.measureFrac + 'm';
+            this.synth.triggerAttackRelease(note, duration);
+        }
+    }
+
+    // Ensures the audio context is running, since browsers disable it by default
+    // The optional callback will only be called if the context needs to be
+    // turned on
+    startAudio() {
+        let self = this;
+        if (self.audioStarted) return;
+
+        return Tone.start().then(self.audioStarted = true);
     }
 }
 
@@ -253,7 +301,13 @@ let handleNode = function(node, treeCursor, editorState) {
     let res = (name in fs) ? fs[name](node, treeCursor, editorState)
                          : extractGenericInfo(node, treeCursor, editorState);
 
-    return (Array.isArray(res) ? res : [res]); // ensure list
+    // If part of a node is broken - it can pick up a Warning property
+    let resArray = Array.isArray(res) ? res : [res];
+    resArray.forEach(r => {
+        if ('⚠' in r) r.name = '⚠';
+    });
+
+    return (resArray); // ensure list
 }
 
 // Information attached to any node we care about like what it is,
@@ -269,6 +323,7 @@ let extractGenericInfo = function(node, treeCursor, editorState) {
 // Notes and Rests
 let handleNote = function(node, treeCursor, editorState,) {
     let noteObj = extractGenericInfo(node, treeCursor, editorState);
+
 
     noteObj['preText'] = "";  // default values
     noteObj['postText'] = ""; // Include as optional arg?
@@ -362,17 +417,14 @@ let handleDotted = function(node, treeCursor, editorState) {
         } while (localCursor.nextSibling());
 
         // The middle dot affects the two outer note/chord/rest nodes
-        console.log(dottedGroup[0]);
         dottedGroup[0].postText = dottedNode.rawText;
         dottedGroup[0].rawText += dottedNode.rawText;
         dottedGroup[0].position[1] = dottedNode.position[1];
-        console.log(dottedGroup[0]);
 
         dottedGroup[1].preText = dottedNode.rawText;
 
     }
     catch (e) {
-        console.log(e)
         dottedGroup = extractGenericInfo(node,treeCursor, editorState);
         dottedGroup.name = '⚠';
     }
@@ -386,6 +438,15 @@ let handleMetadata = function(md) {
     let v = newMetadata.join('').trim();
 
     return {k, v}
+}
+
+let setupSynth = function() {
+    let synth = new Tone.PolySynth();
+    let verb = new Tone.Reverb();
+
+    synth.connect(verb).toDestination();
+
+    return synth;
 }
 
 export { ScoreHandler };
