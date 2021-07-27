@@ -1,3 +1,6 @@
+import 'bootstrap';
+import '../scss/custom.scss';
+
 import {Extension, EditorState} from "@codemirror/state"
 import {EditorView, keymap, highlightSpecialChars, drawSelection, highlightActiveLine} from "@codemirror/view"
 import {Text} from "@codemirror/text"
@@ -5,7 +8,8 @@ import {history, historyKeymap} from "@codemirror/history"
 import {lineNumbers, highlightActiveLineGutter} from "@codemirror/gutter"
 import {defaultKeymap} from "@codemirror/commands"
 import {HighlightStyle, defaultHighlightStyle} from "@codemirror/highlight"
-import {basicSetup} from "@codemirror/basic-setup"
+import {bracketMatching} from "@codemirror/matchbrackets"
+import {closeBrackets, closeBracketsKeymap} from "@codemirror/closebrackets"
 
 import * as osmd from "opensheetmusicdisplay"
 
@@ -14,7 +18,7 @@ import {ABC} from "./abc_language.js"
 import {ScoreHandler} from "./score_handler.js";
 
 // Variables
-const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n|ABcd|]';
+const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
 
 let timer; // Only send to flask server at a max interval
@@ -25,12 +29,20 @@ const abcThing = ABC();
 let startState = EditorState.create({
     doc: starterABC,
     extensions: [
-        // lineNumbers(),
-        // history(),
-        // keymap.of(defaultKeymap, historyKeymap),
-        // highlightActiveLineGutter(),
-        // highlightActiveLine(),
-        basicSetup,
+        lineNumbers(),
+        history(),
+        highlightActiveLineGutter(),
+        highlightActiveLine(),
+        highlightSpecialChars(),
+        drawSelection(),
+        defaultHighlightStyle.fallback,
+        bracketMatching(),
+        closeBrackets(),
+        keymap.of([
+            ...closeBracketsKeymap,
+            ...defaultKeymap,
+            ...historyKeymap
+        ]),
         ABC(),
         EditorView.updateListener.of((v) => {
             let treeCursor = view.state.tree.cursor();

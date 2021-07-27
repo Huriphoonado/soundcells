@@ -1,0 +1,24 @@
+// Customize - https://getbootstrap.com/docs/5.0/customize/sass/
+
+@import "../../node_modules/bootstrap/scss/bootstrap";
+
+// This currently doesn't do anything - will need separate @include statements
+$utilities: map-merge(
+  $utilities,
+  (
+    "viewport-height": map-merge(
+      map-get($utilities, "viewport-height"),
+      (
+        values: map-merge(
+          map-get(map-get($utilities, "viewport-height"), "values"),
+          (90: 90vh),
+        ),
+      ),
+    ),
+  )
+);
+
+// Codepen
+.cm-editor * {
+    font-size: 18px ;
+}
