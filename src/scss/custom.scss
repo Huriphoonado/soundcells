@@ -1,6 +1,7 @@
 // Customize - https://getbootstrap.com/docs/5.0/customize/sass/
 
 @import "../../node_modules/bootstrap/scss/bootstrap";
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css");
 
 // This currently doesn't do anything - will need separate @include statements
 $utilities: map-merge(
