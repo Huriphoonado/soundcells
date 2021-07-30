@@ -15,7 +15,9 @@ import * as osmd from "opensheetmusicdisplay"
 
 import {ABC} from "./abc_language.js"
 
-import {ScoreHandler} from "./score_handler.js";
+import { ScoreHandler } from "./score_handler.js";
+
+// import { Midi } from '@tonejs/midi';
 
 // Variables
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
@@ -48,6 +50,7 @@ let startState = EditorState.create({
             let treeCursor = view.state.tree.cursor();
             if(v.docChanged) {
                 let output = scoreHandler.generateScoreStructure(treeCursor, view.state);
+                scoreHandler.play();
 
                 // Only post after groups of changes
                 if (timer) clearTimeout(timer);
@@ -112,6 +115,7 @@ sendABC(starterABC);
 
 const showPosition = function(currentPosition) {
     let outputString = "";
+    console.log(currentPosition);
 
     if (currentPosition.measures.length) {
         let m = currentPosition.measures[0];
@@ -120,8 +124,8 @@ const showPosition = function(currentPosition) {
     if (currentPosition.events.length) {
         let ev = currentPosition.events[0];
         let note = ev.scientificNotation.note ? ev.scientificNotation.note : 'rest';
-        let ticks = ev.scientificNotation.tick
-        outputString += `Note ${note}, ${ticks} tick(s).`;
+        let dur = ev.scientificNotation.relativeDur;
+        outputString += `Note ${note}, ${dur}`;
     }
     document.getElementById('info').innerHTML = outputString;
 }

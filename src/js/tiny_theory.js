@@ -30,9 +30,28 @@ let getAccidentalByKey = function(pitch, key) {
          : 0
 }
 
+// Converts the information parsed from abce note text into scientific notation
+// human readable and readable by tone
+let calculatePitchNotation = function(node, md) {
+    if (node.name != 'Note') return null;
+    let octave = 4
+        + (node.pitch.toLowerCase() == node.pitch)
+        - (node.octave.split(",").length - 1)
+        + (node.octave.split("'").length - 1);
+
+    let ac;
+    if (node.accidental == "=") ac = 0;
+    else ac = getAccidentalByKey(node.pitch.toLowerCase(), md.K.toLowerCase())
+        - (node.accidental.split("_").length - 1)
+        + (node.accidental.split("^").length - 1);
+    let accidental = ['bb', 'b', '', '#', 'x'][Math.min(Math.max(ac, -2), 2) + 2];
+
+    return node.pitch.toUpperCase() + accidental + octave;
+}
+
 // Converts a note in ABC to a more standard version
 // "c" => "C5"
-let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}) {
+let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}, tone) {
     let scientificNotation = {};
 
     // Calculate duration values
@@ -51,34 +70,21 @@ let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}) {
     }
 
     let measureFrac = tick / mNum; // fraction of the measure
+    let sec = measureFrac * mDenum * 60 / tone.Transport.bpm.value;
 
     scientificNotation['tick'] = tick;
     scientificNotation['measureFrac'] = measureFrac;
-    scientificNotation['note'] = null;
+    scientificNotation['seconds'] = sec;
+    scientificNotation['relativeDur'] = tone.Time(sec).toNotation();
+    scientificNotation['note'] = null; // Rests are null
 
     if (node.name == 'Chord') {
         scientificNotation.note = [];
         node.notes.forEach(n => {
-            scientificNotation.note.push(abcToScientific(n, md).note);
+            scientificNotation['note'].push(calculatePitchNotation(n, md));
         })
     }
-
-    // Calculate pitch values
-    if ( node.name == 'Note' ) {
-        let octave = 4
-            + (node.pitch.toLowerCase() == node.pitch)
-            - (node.octave.split(",").length - 1)
-            + (node.octave.split("'").length - 1);
-
-        let ac;
-        if (node.accidental == "=") ac = 0;
-        else ac = getAccidentalByKey(node.pitch.toLowerCase(), md.K.toLowerCase())
-            - (node.accidental.split("_").length - 1)
-            + (node.accidental.split("^").length - 1);
-        let accidental = ['bb', 'b', '', '#', 'x'][Math.min(Math.max(ac, -2), 2) + 2];
-
-        scientificNotation['note'] = node.pitch.toUpperCase() + accidental + octave;
-    }
+    else if (node.name == 'Note') scientificNotation['note'] = calculatePitchNotation(node, md);
 
     return scientificNotation;
 }

@@ -1,7 +1,7 @@
+from io import BytesIO
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from music21 import converter, musicxml, abcFormat, stream
-from music21.braille import translate
+from music21 import converter, braille, midi, musicxml, abcFormat, stream
 
 app = Flask(__name__)
 CORS(app)
@@ -14,8 +14,10 @@ def getuserinput():
 
         # Data Responses
         error = ""
-        braille = ""
+        brailleFile = ""
         mxml = ""
+        mf = ""
+        midiBytes = b''
 
         ah = abcFormat.ABCHandler()
 
@@ -34,8 +36,17 @@ def getuserinput():
             abcTextSample = converter.parse(data, format='abc')
             # abcTextSample.show('text')
 
+            # Music XML
             mxml = musicxml.m21ToXml.GeneralObjectExporter(abcTextSample).parse().decode('utf-8').strip()
-            braille = translate.objectToBraille(abcTextSample)
+
+            # Braille
+            brailleFile = braille.translate.objectToBraille(abcTextSample)
+
+            # MIDI
+            # I could not figure out how to send this to the web app
+            # mf = midi.translate.streamToMidiFile(abcTextSample)
+            # midiBytes = mf.writestr() # Binary String, needs to be decoded?
+            # mf.close()
 
         except IndexError:  # Occurs when the user inputs nothing
             error = 'Converter cannot parse empty string'
@@ -43,7 +54,7 @@ def getuserinput():
         except converter.ConverterException:
             error = "Invalid syntax. Unable to convert."
 
-        send_data = {"braille": braille, "musicxml": mxml, "error": error}
+        send_data = {"braille": brailleFile, "musicxml": mxml, "error": error}
         return jsonify(send_data)
 
 # Home page

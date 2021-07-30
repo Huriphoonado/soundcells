@@ -25,6 +25,16 @@ class ScoreHandler {
 
         this.synth = setupSynth();
         this.audioStarted = false;
+        this.playback = {
+            score: [],
+            mode: "score", // toggle between score and loop
+            duration: 0
+        }
+
+        let self = this;
+        this.playback.part = new Tone.Part(((time, ev) => {
+            self.synth.triggerAttackRelease(ev.note, ev.duration, time);
+        }), this.playback[this.playback.mode]);
     }
 
     // Iterates through a syntax tree and generates an event list
@@ -159,17 +169,36 @@ class ScoreHandler {
         // ------------------ 3. ------------------
         // Finally, add music context and create standard note strings
         let runningMetadata = {};
+
+        let runningDuration = 0;
+        let newPlaybackScore = [];
+
         newStructure.forEach(s => {
             runningMetadata = {
                 ...runningMetadata,
                 ...s.metadata
             }
+
+            Tone.Transport.timeSignature = runningMetadata.M.split("/").map(n => +n);
+            // Locked at 120 Will need to process Q in a special way
+            Tone.Transport.bpm.value = 120;
+
+
             if (s.measures) {
                 s.measures.forEach(m => {
                     m.duration = 0;
                     m.events.forEach(e => {
-                        e.scientificNotation = TinyTheory.abcToScientific(e, runningMetadata);
-                        m.duration += e.scientificNotation.measureFrac;
+                        e.scientificNotation = TinyTheory.abcToScientific(e, runningMetadata, Tone);
+                        m.duration += e.scientificNotation.measureFrac; // Total Measure duration
+
+                        // Audio Playback objects
+                        e.scientificNotation.time = runningDuration;
+                        newPlaybackScore.push({
+                            note: e.scientificNotation.note,
+                            duration: e.scientificNotation.seconds,
+                            time: e.scientificNotation.time
+                        });
+                        runningDuration += e.scientificNotation.seconds;
                     })
                     m.isComplete = (m.duration == 1);
                     m.comment = m.measure == 0 ? 'Pickup'
@@ -184,13 +213,19 @@ class ScoreHandler {
         this.scoreStructure = newStructure;
         console.log(this.scoreStructure);
 
-        return { abc: this.getABCOutput(),errorList: this.errors };
+        // Audio Playback objects
+        this.playback.duration = runningDuration;
+        this.playback.score = newPlaybackScore;
+        this.scheduleEvents();
+
+        return { abc: this.getABCOutput(), errorList: this.errors };
     }
 
     addError(obj) { this.errorList.push(obj); }
 
     // Returns an object containing the current measure and event that the
     // cursor is on - both properties may be empty
+    // Does not support highlighting or multiselect yet
     updatePosition(selection) {
         this.currentPosition = {measures: [], events: []};
         if (!this.hasNotes()) return this.currentPosition;
@@ -219,9 +254,12 @@ class ScoreHandler {
                 let end = ev.position[1];
                 return (from > start && to <= end); // Does not work for highlighting
             });
+
+            this.setLoopPoints();
+
         }
         catch(e) { console.log(e); }
-        finally { return this.currentPosition }
+        finally { return this.currentPosition; }
     }
 
     getCurrentPosition() { return this.currentPosition }
@@ -243,10 +281,10 @@ class ScoreHandler {
                     else if (m.position.length == 2) abcOutput += m.barlines[0];
                 });
             }
-            abcOutput += '\n';
+            abcOutput += '\n'; // abc scores terminate with newlines
         });
 
-        if (!this.hasNotes()) abcOutput += this.default.music;
+        if (!this.hasNotes()) abcOutput += this.default.music += '\n';
 
         return abcOutput;
     }
@@ -260,6 +298,8 @@ class ScoreHandler {
         return true;
     }
 
+
+    // Audio Playback functions
     playNote() {
         if (!this.audioStarted) return this.startAudio().then(this.playNote());
         let evList = this.getCurrentPosition().events;
@@ -268,9 +308,71 @@ class ScoreHandler {
 
         if (ev.name == 'Note' || ev.name == 'Chord') {
             let note = ev.scientificNotation.note;
-            let duration = ev.scientificNotation.measureFrac + 'm';
+            let duration = ev.scientificNotation.seconds;
             this.synth.triggerAttackRelease(note, duration);
         }
+    }
+
+    // Fix the select not including one of the measure lines
+    play(selectedMode="score") {
+        Tone.Transport.loop = true;
+        if (!this.audioStarted) this.startAudio().then(Tone.Transport.start());
+        else { Tone.Transport.start(); };
+    }
+
+    pause() { Tone.Transport.pause() }
+    stop() { Tone.Transport.stop() }
+
+    getPlaybackState() {
+        return {
+            state: Tone.Transport.state,
+            seconds: Tone.Transport.seconds,
+            loopStart: Tone.Transport.loopStart,
+            loopEnd: Tone.Transport.loopEnd,
+        }
+    }
+
+    // Add audio playback events to the Tone timeline
+    scheduleEvents() {
+        Tone.Transport.cancel(0);
+        let self = this;
+        self.playback.score.forEach(ev => {
+            console.log(ev);
+            Tone.Transport.schedule((time) => {
+                self.synth.triggerAttackRelease(ev.note, ev.duration);
+            }, ev.time)
+        })
+        Tone.Transport.stop(self.playback.duration + 0.1);
+    }
+
+    // Currently works for the current measure
+    setLoopPoints() {
+        if (!(this.hasNotes())) {
+            Tone.Transport.setLoopPoints(-1, -0.9);
+            return;
+        }
+
+        // Defaults for when there are no notes in the measure
+        let firstNoteTime = -1;
+        let lastNoteTime = -0.9;
+
+        try {
+            firstNoteTime = this.currentPosition
+                                    .measures[0]
+                                    .events[0]
+                                    .scientificNotation.time;
+            lastNoteTime = this.currentPosition
+                                    .measures.slice(-1)[0]
+                                    .events.slice(-1)[0]
+                                    .scientificNotation.time +
+                                this.currentPosition
+                                    .measures.slice(-1)[0]
+                                    .events.slice(-1)[0]
+                                    .scientificNotation.seconds;
+            console.log(firstNoteTime, lastNoteTime);
+
+        } catch (e) {
+        } finally { Tone.Transport.setLoopPoints(firstNoteTime, lastNoteTime); }
     }
 
     // Ensures the audio context is running, since browsers disable it by default
@@ -389,7 +491,7 @@ let handleChord = function(node, treeCursor, editorState) {
 }
 
 // Takes a Dotted rhythm node and returns two note or chord children
-// Example Group: _A4 >> [bde]
+// Example ABC: _A4 >> [bde]
 let handleDotted = function(node, treeCursor, editorState) {
     let localCursor = node.cursor;
     let dottedGroup = [];
@@ -440,6 +542,7 @@ let handleMetadata = function(md) {
     return {k, v}
 }
 
+// Tone.js Synthesizer setup
 let setupSynth = function() {
     let synth = new Tone.PolySynth();
     let verb = new Tone.Reverb();
