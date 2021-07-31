@@ -70,7 +70,7 @@ let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}, tone) {
     }
 
     let measureFrac = tick / mNum; // fraction of the measure
-    let sec = measureFrac * mDenum * 60 / tone.Transport.bpm.value;
+    let sec = tick * (4 / mDenum) * (60 / tone.Transport.bpm.value);
 
     scientificNotation['tick'] = tick;
     scientificNotation['measureFrac'] = measureFrac;

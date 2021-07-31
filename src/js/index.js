@@ -45,12 +45,13 @@ let startState = EditorState.create({
             ...defaultKeymap,
             ...historyKeymap
         ]),
+        playback(scoreHandler),
+        toggleLoop(scoreHandler),
         ABC(),
         EditorView.updateListener.of((v) => {
             let treeCursor = view.state.tree.cursor();
             if(v.docChanged) {
                 let output = scoreHandler.generateScoreStructure(treeCursor, view.state);
-                scoreHandler.play();
 
                 // Only post after groups of changes
                 if (timer) clearTimeout(timer);
@@ -63,25 +64,8 @@ let startState = EditorState.create({
 
             // Better way to do this? Keymap functions are called before the
             // view is updated so this checks the insertion
-            if ((v.changes.inserted.length == 2)) {
-                let inserted = v.changes.inserted[1].text[0];
-                if (inserted.length == 1 &&
-                "abcdefgABCDEFG,'_^0123456789".split("").includes(inserted)) {
-                    scoreHandler.playNote();
-                }
-            }
+            playNoteWhenTyped(scoreHandler, v);
         }),
-        // keymap.of(
-        //     "abcdefgABCDEFG".split("").map(l => {
-        //         return {
-        //             key: l,
-        //             run() {
-        //                 scoreHandler.playNote();
-        //                 return false;
-        //             }
-        //         }
-        //     })
-        // )
     ],
 });
 
@@ -99,23 +83,10 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawPartNames: false
 });
 
-// Functions
-const sendABC = (abcCode) => {
-    postData('/data', { userdata: abcCode })
-    .then(data => {
-        document.getElementById('braille').innerHTML = data.braille || "";
-        if (data.musicxml) {
-            visualScore.load(data.musicxml)
-            .then( visualScore.render() )
-        }
-    })
-
-}
-sendABC(starterABC);
-
-const showPosition = function(currentPosition) {
+// UI Visuals
+function showPosition(currentPosition) {
     let outputString = "";
-    console.log(currentPosition);
+    //console.log(currentPosition);
 
     if (currentPosition.measures.length) {
         let m = currentPosition.measures[0];
@@ -128,7 +99,52 @@ const showPosition = function(currentPosition) {
         outputString += `Note ${note}, ${dur}`;
     }
     document.getElementById('info').innerHTML = outputString;
+    return outputString;
 }
+
+// UI Sound
+const playNoteWhenTyped = function(scoreHandler, v) {
+    let pbState = scoreHandler.getPlaybackState();
+
+    // Don't play notes if piece is looping
+    if (pbState.state == 'started') return;
+
+    if ((v.changes.inserted.length == 2)) {
+        let inserted = v.changes.inserted[1].text[0];
+        if (inserted.length == 1 &&
+        "abcdefgABCDEFG,'_^0123456789".split("").includes(inserted)) {
+            scoreHandler.playNote();
+        }
+    }
+}
+
+// Special Keys = "Shift-Ctrl-"
+function playback(scoreHandler) {
+  return keymap.of([{
+    key: "Shift-Ctrl-" + "Space",
+    run() { scoreHandler.playPause(); return true }
+  }])
+}
+
+function toggleLoop(scoreHandler) {
+  return keymap.of([{
+    key: "Shift-Ctrl-" + "l",
+    run() { scoreHandler.toggleLoop(); return true }
+  }])
+}
+
+// GET/POST Functions
+const sendABC = (abcCode) => {
+    postData('/data', { userdata: abcCode })
+    .then(data => {
+        document.getElementById('braille').innerHTML = data.braille || "";
+        if (data.musicxml) {
+            visualScore.load(data.musicxml)
+            .then( visualScore.render() )
+        }
+    })
+}
+//sendABC(starterABC);
 
 async function postData(url = '', data = {}) {
   const response = await fetch(url, {
@@ -145,3 +161,7 @@ async function postData(url = '', data = {}) {
   });
   return response.json(); // parses JSON response into native JavaScript objects
 }
+
+// A little hacky?? - This sets up the internal data structure before any
+// input - Maybe store musicxml/braille defaults
+scoreHandler.generateScoreStructure(view.state.tree.cursor(), view.state)

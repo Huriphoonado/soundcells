@@ -27,7 +27,6 @@ class ScoreHandler {
         this.audioStarted = false;
         this.playback = {
             score: [],
-            mode: "score", // toggle between score and loop
             duration: 0
         }
 
@@ -77,7 +76,7 @@ class ScoreHandler {
         let section = 0;
         let measureCount = 0;
         let currentMeasure;
-        console.log(flatList);
+        //console.log(flatList);
         flatList.forEach((o, i) => {
 
             // Metadata
@@ -137,7 +136,7 @@ class ScoreHandler {
                           newStructure[section].measures.push({
                               measure: measureCount,
                               barlines: [o.rawText],
-                              position: [o.position[1]],
+                              position: [o.position[1] - 1],
                               events: [],
                           });
                       }
@@ -180,6 +179,7 @@ class ScoreHandler {
             }
 
             Tone.Transport.timeSignature = runningMetadata.M.split("/").map(n => +n);
+
             // Locked at 120 Will need to process Q in a special way
             Tone.Transport.bpm.value = 120;
 
@@ -313,11 +313,21 @@ class ScoreHandler {
         }
     }
 
-    // Fix the select not including one of the measure lines
-    play(selectedMode="score") {
-        Tone.Transport.loop = true;
-        if (!this.audioStarted) this.startAudio().then(Tone.Transport.start());
-        else { Tone.Transport.start(); };
+    playPause() {
+        if (Tone.Transport.state == "started") this.pause();
+        else {
+            if (Tone.Transport.loop) this.play(Tone.Transport.loopStart);
+            else this.play();
+        }
+
+        return this.getPlaybackState();
+    }
+
+    play(startTime) {
+        if (!this.audioStarted) return this.startAudio().then(this.play(startTime));
+
+        if (!startTime) Tone.Transport.start("+0.01"); // undefined or 0
+        else Tone.Transport.start("+0.01", startTime);
     }
 
     pause() { Tone.Transport.pause() }
@@ -329,6 +339,7 @@ class ScoreHandler {
             seconds: Tone.Transport.seconds,
             loopStart: Tone.Transport.loopStart,
             loopEnd: Tone.Transport.loopEnd,
+            loop: Tone.Transport.loop
         }
     }
 
@@ -337,12 +348,15 @@ class ScoreHandler {
         Tone.Transport.cancel(0);
         let self = this;
         self.playback.score.forEach(ev => {
-            console.log(ev);
             Tone.Transport.schedule((time) => {
                 self.synth.triggerAttackRelease(ev.note, ev.duration);
-            }, ev.time)
-        })
-        Tone.Transport.stop(self.playback.duration + 0.1);
+            }, ev.time);
+        });
+        Tone.Transport.schedule((time) => {
+            Tone.Transport.stop()
+        }, self.playback.duration + 0.1);
+
+        //Tone.Transport.stop(self.playback.duration + 0.1);
     }
 
     // Currently works for the current measure
@@ -373,6 +387,12 @@ class ScoreHandler {
 
         } catch (e) {
         } finally { Tone.Transport.setLoopPoints(firstNoteTime, lastNoteTime); }
+    }
+
+    toggleLoop() {
+        Tone.Transport.loop = !Tone.Transport.loop;
+        Tone.Transport.stop(); // Reset Playback head
+        return this.getPlaybackState();
     }
 
     // Ensures the audio context is running, since browsers disable it by default
