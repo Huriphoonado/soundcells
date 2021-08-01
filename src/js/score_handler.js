@@ -383,7 +383,6 @@ class ScoreHandler {
                                     .measures.slice(-1)[0]
                                     .events.slice(-1)[0]
                                     .scientificNotation.seconds;
-            console.log(firstNoteTime, lastNoteTime);
 
         } catch (e) {
         } finally { Tone.Transport.setLoopPoints(firstNoteTime, lastNoteTime); }

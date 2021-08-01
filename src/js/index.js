@@ -1,4 +1,4 @@
-import 'bootstrap';
+import * as bootstrap from 'bootstrap';
 import '../scss/custom.scss';
 
 import {Extension, EditorState} from "@codemirror/state"
@@ -23,6 +23,8 @@ import { ScoreHandler } from "./score_handler.js";
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
 
+const specialKeyCommand = "Shift-Ctrl-";
+
 let timer; // Only send to flask server at a max interval
 
 // Editor
@@ -40,15 +42,17 @@ let startState = EditorState.create({
         defaultHighlightStyle.fallback,
         bracketMatching(),
         closeBrackets(),
-        keymap.of([
+        keymap.of([ // Default key commands
             ...closeBracketsKeymap,
             ...defaultKeymap,
             ...historyKeymap
         ]),
-        playback(scoreHandler),
+        playback(scoreHandler), // Custom key commands
         toggleLoop(scoreHandler),
-        ABC(),
-        EditorView.updateListener.of((v) => {
+        readMeasure(scoreHandler),
+        readNote(scoreHandler),
+        ABC(), // Parser
+        EditorView.updateListener.of((v) => { // Main Event Handler
             let treeCursor = view.state.tree.cursor();
             if(v.docChanged) {
                 let output = scoreHandler.generateScoreStructure(treeCursor, view.state);
@@ -88,17 +92,33 @@ function showPosition(currentPosition) {
     let outputString = "";
     //console.log(currentPosition);
 
+    outputString += currentMeasureString(currentPosition);
+    if (outputString.length) outputString += " -- ";
+    outputString += currentNoteString(currentPosition);
+
+    document.getElementById('info').innerHTML = outputString;
+    return outputString;
+}
+
+function currentMeasureString(currentPosition) {
+    let outputString = "";
     if (currentPosition.measures.length) {
         let m = currentPosition.measures[0];
-        outputString += `Measure ${m.measure} (${m.comment}) -- `;
+        outputString += `Measure ${m.measure} (${m.comment})`;
     }
+
+    return outputString;
+}
+
+function currentNoteString(currentPosition) {
+    let outputString = "";
     if (currentPosition.events.length) {
         let ev = currentPosition.events[0];
         let note = ev.scientificNotation.note ? ev.scientificNotation.note : 'rest';
         let dur = ev.scientificNotation.relativeDur;
         outputString += `Note ${note}, ${dur}`;
     }
-    document.getElementById('info').innerHTML = outputString;
+
     return outputString;
 }
 
@@ -118,18 +138,90 @@ const playNoteWhenTyped = function(scoreHandler, v) {
     }
 }
 
-// Special Keys = "Shift-Ctrl-"
+// Screen Reader Speech
+// https://a11y-guidelines.orange.com/en/web/components-examples/make-a-screen-reader-talk/
+function srSpeak(text, priority) {
+    let el = document.createElement("div");
+    let id = "speak-" + Date.now();
+    el.setAttribute("id", id);
+    el.setAttribute("aria-live", priority || "polite"); // "assertive"
+    //el.classList.add("sr-only");
+    el.classList.add("visually-hidden");
+    document.body.appendChild(el);
+
+    window.setTimeout(function () {
+        document.getElementById(id).innerHTML = text;
+    }, 100);
+
+    window.setTimeout(function () {
+        document.body.removeChild(document.getElementById(id));
+    }, 1000);
+}
+
+// Key Commands
+// The tab toggler command  can occur outside of the editor.
+// Thus it is implemented as a raw key input
+function toggleTab(ev) {
+    if (!(ev.ctrlKey && ev.shiftKey && (ev.key == "T"))) return;
+
+    let abcTab = document.getElementById('nav-abc-editor-tab');
+    let brailleTab = document.getElementById('nav-braille-music-tab');
+    let bootstrapTab;
+
+    bootstrapTab = new bootstrap.Tab(abcTab.ariaSelected == "true" ? brailleTab : abcTab);
+    bootstrapTab.show();
+
+    return true;
+}
+
+// Callback function that gets called after tab show event
+// Automatically focusses on first focusable child element of tab target
+document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(t => {
+    t.addEventListener('shown.bs.tab', ev => {
+        let editable = document.querySelector(`${ev.target.getAttribute("data-bs-target")} [role="textbox"], [tabindex]:not([tabindex="-1"]`);
+        if (editable) editable.focus();
+    })
+});
+
+document.onkeydown = toggleTab;
+
 function playback(scoreHandler) {
   return keymap.of([{
-    key: "Shift-Ctrl-" + "Space",
-    run() { scoreHandler.playPause(); return true }
+    key: specialKeyCommand + "Space",
+    run() { scoreHandler.playPause(); return true; }
   }])
 }
 
 function toggleLoop(scoreHandler) {
   return keymap.of([{
-    key: "Shift-Ctrl-" + "l",
-    run() { scoreHandler.toggleLoop(); return true }
+    key: specialKeyCommand + "l",
+    run() {
+        let loopState = scoreHandler.toggleLoop().loop;
+        let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
+        srSpeak(msg);
+        return true;
+    }
+  }])
+}
+
+function readMeasure(scoreHandler) {
+  return keymap.of([{
+    key: specialKeyCommand + "m",
+    run() {
+        srSpeak(currentMeasureString(scoreHandler.getCurrentPosition()), "assertive");
+        return true;
+    }
+  }])
+}
+
+function readNote(scoreHandler) {
+  return keymap.of([{
+    key: specialKeyCommand + "n",
+    run() {
+        let noteString = currentNoteString(scoreHandler.getCurrentPosition()) || "No note selected";
+        srSpeak(noteString, "assertive");
+        return true;
+    }
   }])
 }
 

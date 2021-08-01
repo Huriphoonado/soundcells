@@ -79,24 +79,49 @@
                                 </button>
                             </h2>
                             <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionDocTwo">
-                                <div class="accordion-body">
+                                <div class="accordion-body d-grid gap-3">
                                     <p>soundcells commands all begin with <kbd>shift + ctrl</kbd></p>
-                                    <ul class="list-group">
-                                        <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
-                                            <span>Play/Pause</span>
-                                            <span><kbd>shift + ctrl + space</kbd></span>
-                                        </li>
-                                        <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
-                                            <span>Toggle Loop Mode</span>
-                                            <span><kbd>shift + ctrl + l</kbd></span>
-                                        </li>
-                                    </ul>
+                                    <div>
+                                        <h5>Nav</h5>
+                                        <ul class="list-group">
+                                            <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Switch Tab</span>
+                                                <span><kbd>shift + ctrl + t</kbd></span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h5>Music Playback</h5>
+                                        <ul class="list-group">
+                                            <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Play/Pause</span>
+                                                <span><kbd>shift + ctrl + space</kbd></span>
+                                            </li>
+                                            <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Toggle Loop Mode</span>
+                                                <span><kbd>shift + ctrl + l</kbd></span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h5>Information (Screen Reader Only)</h5>
+                                        <ul class="list-group">
+                                            <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Current Measure</span>
+                                                <span><kbd>shift + ctrl + m</kbd></span>
+                                            </li>
+                                            <li class="list-group-item list-group-item d-flex justify-content-between align-items-center">
+                                                <span>Current Note</span>
+                                                <span><kbd>shift + ctrl + n</kbd></span>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </aside>
-                <main class="order-1 col-sm-6 col-md-9">
+                <main id="main" class="order-1 col-sm-6 col-md-9">
                     <nav>
                         <div class="nav nav-tabs" id="nav-tab" role="tablist">
                             <button class="nav-link active" id="nav-abc-editor-tab" data-bs-toggle="tab" data-bs-target="#nav-abc-editor" type="button" role="tab" aria-controls="nav-abc-editor" aria-selected="true">ABC Text</button>
@@ -109,10 +134,14 @@
                             <div id="info"></div>
                         </div>
                         <div class="tab-pane fade" id="nav-braille-music" role="tabpanel" aria-labelledby="nav-braille-music-tab">
-                            <div id="braille"></div>
+                            <div id="braille" tabindex="0">
+                                ⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁
+                                ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓
+                                ⠀⠀⠜⠦⠀⠼⠙⠲⠀⠀
+                                ⠼⠁⠀⠐⠪⠺⠹⠱⠣
+                            </div>
                         </div>
                     </div>
-
                     <div id="errors"></div>
                     <div id="score"></div>
                 </main>
