@@ -330,8 +330,8 @@ class ScoreHandler {
         else Tone.Transport.start("+0.01", startTime);
     }
 
-    pause() { Tone.Transport.pause() }
-    stop() { Tone.Transport.stop() }
+    pause() { Tone.Transport.pause(); this.synth.releaseAll(); }
+    stop() { Tone.Transport.stop(); this.synth.releaseAll(); }
 
     getPlaybackState() {
         return {

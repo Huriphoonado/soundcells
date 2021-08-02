@@ -48,6 +48,7 @@ let startState = EditorState.create({
             ...historyKeymap
         ]),
         playback(scoreHandler), // Custom key commands
+        stop(scoreHandler),
         toggleLoop(scoreHandler),
         readMeasure(scoreHandler),
         readNote(scoreHandler),
@@ -189,6 +190,13 @@ function playback(scoreHandler) {
   return keymap.of([{
     key: specialKeyCommand + "Space",
     run() { scoreHandler.playPause(); return true; }
+  }])
+}
+
+function stop(scoreHandler) {
+  return keymap.of([{
+    key: specialKeyCommand + ".",
+    run() { scoreHandler.stop(); return true; }
   }])
 }
 

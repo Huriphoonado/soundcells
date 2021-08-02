@@ -1,0 +1,40 @@
+<div class="accordion accordion-flush" id="accordionDocThree">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="flush-headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                Tutorial
+            </button>
+        </h2>
+        <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionDocThree">
+            <div class="accordion-body">
+                <p>Soundcells uses a text-based notation called abc. Musical scores notated in abc contain two main parts, the header and the notes.</p>
+
+                <h5>Header</h5>
+                <p>A header, also called metadata, provides information about an entire piece of music or an excerpt that follows it. Every field must be on its own line and must contain a capital letter followed by a colon and a value. For example, the following is a minimal header:</p>
+                <pre><code>X: 1
+M: 4/4
+K: Bb</code></pre>
+                <p>Above, <code>X</code> provides a tune number, <code>M</code> indicates a time signature of four-over-four while <code>K</code> sets a key signature of Bb.</p>
+                <p>Optionally, you might want to set a composer with <code>C</code>, a title with <code>T</code>, or a default note length with <code>L</code>.</p>
+                <p>You can have multiple header groups in a score, but don't stick one in the middle of a measure!</p>
+
+                <h5>Notes</h5>
+                <p>Notes are added by typing a letter from <code>a–g</code>. Lowercase letters are an octave higher than uppercase letters, octave 5 and octave 4 respectively.</p>
+                <p>Typed before the pitch: underscores and carets flatten and sharpen it, while an equal sign (<code>=</code>) makes it natural.</p>
+                <p>Typed after the pitch: numbers and fractions multiply its base duration (specified by header <code>L</code>). Apostrophes (<code>'</code>) and commas (<code>,</code>) raise or lower the octave. Soundcells plays the note back anytime you type on of these characters, so play around!</p>
+                <p>Finally, you can notate barlines by typing a vertical line or a pipe <code>|</code> with <kbd>shift + \</kbd>. As you might guess, two vertical lines is a double bar <code>||</code> while a vertical line followed by a right square bracket is an ending double bar <code>|]</code>.</p>
+                <h5>Example ABC Tune</h5>
+                <p>Copy the following tune into the soundcells editor and then play it back to guess what it is (<kbd>ctrl+shift+space</kbd>)! </p>
+                <pre><code>X:1
+T:Familar Tune
+M:4/4
+K:Bb
+D2 C2 B,2 C2 | D2 D2 D4 |
+C2 C2 C4 | D2 F2 F4 |
+D2 C2 B,2 C2 | D2 D2 D2 D2 |
+C2 C2 D2 C2 | B,8 |]</code></pre>
+            </div>
+
+        </div>
+    </div>
+</div>
