@@ -54,21 +54,23 @@ class ScoreHandler {
 
         // ------------------ 1. ------------------
 
+        console.log(treeCursor);
         treeCursor.firstChild(); // Enter the tree
-        while (treeCursor.nextSibling()) {
+        do {
+            console.log(treeCursor.node);
             let syntaxNode = treeCursor.node;
             console.log(syntaxNode.type.name);
 
             // Filter out errors (keep separate) and comments (throw away)
             // Create a flat list of top-level nodes that we care about
-            if (syntaxNode.type.name != 'Comment') {
+            if (!['Comment', 'Program'].includes(syntaxNode.type.name)) {
                 let newElems = handleNode(syntaxNode, treeCursor, editorState);
                 newElems.forEach(el => {
                     if (el.name == '⚠') this.addError(el)
                     else flatList.push(el);
                 });
             }
-        }
+        } while (treeCursor.nextSibling());
 
         // ------------------ 2. ------------------
 
@@ -166,6 +168,7 @@ class ScoreHandler {
             if (!lastMeasure.events.length) newStructure.slice(-1)[0].measures.pop();
         }
         // ------------------ 3. ------------------
+
         // Finally, add music context and create standard note strings
         let runningMetadata = {};
 
@@ -178,32 +181,32 @@ class ScoreHandler {
                 ...s.metadata
             }
 
+            // Used for calculating the timing of typed events
             Tone.Transport.timeSignature = runningMetadata.M.split("/").map(n => +n);
-
-            // Locked at 120 Will need to process Q in a special way
-            Tone.Transport.bpm.value = 120;
-
+            Tone.Transport.bpm.value = TinyTheory.extractTempo(runningMetadata.Q);
 
             if (s.measures) {
                 s.measures.forEach(m => {
                     m.duration = 0;
                     m.events.forEach(e => {
-                        e.scientificNotation = TinyTheory.abcToScientific(e, runningMetadata, Tone);
-                        m.duration += e.scientificNotation.measureFrac; // Total Measure duration
+                        if (["Note", "Chord", "Rest"].includes(e.name)) {
+                            e.scientificNotation = TinyTheory.abcToScientific(e, runningMetadata, Tone);
+                            m.duration += e.scientificNotation.measureFrac; // Total Measure duration
 
-                        // Audio Playback objects
-                        e.scientificNotation.time = runningDuration;
-                        newPlaybackScore.push({
-                            note: e.scientificNotation.note,
-                            duration: e.scientificNotation.seconds,
-                            time: e.scientificNotation.time
-                        });
-                        runningDuration += e.scientificNotation.seconds;
-                    })
+                            // Audio Playback objects
+                            e.scientificNotation.time = runningDuration;
+                            newPlaybackScore.push({
+                                note: e.scientificNotation.note,
+                                duration: e.scientificNotation.seconds,
+                                time: e.scientificNotation.time
+                            });
+                            runningDuration += e.scientificNotation.seconds;
+                        }
+                    });
                     m.isComplete = (m.duration == 1);
                     m.comment = m.measure == 0 ? 'Pickup'
-                              : m.duration > 1 ? 'Overfilled'
-                              : m.duration < 1 ? 'Underfilled'
+                              : m.duration - 1 > 0.01 ? 'Overfilled'
+                              : m.duration  - 1 < 0.01 < 1 ? 'Underfilled'
                               : m.position.length < 2 ? 'No right barline'
                               : 'Valid'
                 });
@@ -244,7 +247,7 @@ class ScoreHandler {
 
             this.currentPosition.measures = allMeasures.filter(m => {
                 let start = m.position[0];
-                let end = m.position[1] ? m.position[1]
+                let end = (typeof m.position[1] !== "undefined") ? m.position[1]
                         : m.events.slice(-1)[0].position[1];
                 return (from > start && to <= end);
             })
@@ -271,7 +274,7 @@ class ScoreHandler {
 
         let abcOutput = "";
 
-        this.scoreStructure.filter((s, i) =>  (i == 0 || s.measures) )
+        this.scoreStructure.filter((s, i) =>  (i == 0 || s.measures.length || s.metadata.W || s.metadata.w) )
         .forEach(s => {
             for (const k in s.metadata) { abcOutput += `${k}:${s.metadata[k]}\n` };
             if (s.measures) {
@@ -291,11 +294,14 @@ class ScoreHandler {
 
     // Check if the user has written any notes
     hasNotes() {
-        if (!this.scoreStructure) return false;
-        if (!this.scoreStructure[0]) return false;
-        if (!this.scoreStructure[0].measures) return false;
-        if (!this.scoreStructure[0].measures[0].events) return false;
-        return true;
+        if (!this.scoreStructure) return hasANote;
+
+        // This is sweet - fix some of the other nested places with this!
+        return this.scoreStructure
+            .map(s => s.measures).filter(m => typeof m !== "undefined").flat() // list of measures
+            .map(m => m.events).filter(e => typeof e !== "undefined").flat() // list of events
+            .filter(n => ["Note", "Chord", "Rest"].includes(n.name))
+            .length ? true : false;
     }
 
 
@@ -425,7 +431,7 @@ let handleNode = function(node, treeCursor, editorState) {
     // If part of a node is broken - it can pick up a Warning property
     let resArray = Array.isArray(res) ? res : [res];
     resArray.forEach(r => {
-        if ('⚠' in r) r.name = '⚠';
+        if ('⚠' in r) r.name = '⚠'; // Handle error better!
     });
 
     return (resArray); // ensure list
@@ -553,17 +559,62 @@ let handleDotted = function(node, treeCursor, editorState) {
 }
 
 // Takes a metadata string and returns a keyvalue pair
-let handleMetadata = function(md) {
+// Certain metadata have specific
+let handleMetadata = function(md, def={K:'c', L:'1/4', M:'4/4', Q: 120}) {
     let newMetadata = md.rawText.split(":");
     let k = newMetadata.shift();
     let v = newMetadata.join('').trim();
+
+    // Special Cases - Tempo, Base Duration, Time Sig,  KeySig
+    if (k == "K" && !TinyTheory.isValidKey(v)) {
+        // throw error;
+        v = def.K;
+    }
+
+    if (k == "L" && !TinyTheory.isValidUnitNoteLength(v)) {
+        // throw error
+        v = def.L;
+    }
+
+    if (k == "M" && !TinyTheory.isValidTimeSig(v)) {
+        // throw error
+        v = def.M;
+    }
+
+    if (k == "Q" && !TinyTheory.isValidTempo(v)) {
+        // throw error
+        v = def.Q;
+    }
 
     return {k, v}
 }
 
 // Tone.js Synthesizer setup
 let setupSynth = function() {
-    let synth = new Tone.PolySynth();
+    let synth = new Tone.PolySynth(Tone.FMSynth);
+    synth.set({
+        "harmonicity":5,
+        "modulationIndex": 10,
+        "oscillator" : {
+            "type": "sine"
+        },
+        "envelope": {
+            "attack": 0.001,
+            "decay": 2,
+            "sustain": 0.1,
+            "release": 2
+        },
+        "modulation" : {
+            "type" : "square"
+        },
+        "modulationEnvelope" : {
+            "attack": 0.002,
+            "decay": 0.2,
+            "sustain": 0,
+            "release": 0.2
+        }
+    })
+
     let verb = new Tone.Reverb();
 
     synth.connect(verb).toDestination();

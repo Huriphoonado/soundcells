@@ -1,4 +1,5 @@
 // Some basic music theory constructs that are useful here
+// Also, ABC notation specific constants and checkers
 
 const numSharp = {
     'c' : 0,  'am': 0,
@@ -23,6 +24,14 @@ const numFlats = {
     'cb': 7, 'abm': 7,
 };
 const flatsList = ["b", "e", "a", "d", "g", "c", "f"];
+
+// 1 could be valid, but the music21 parser seems to break
+const unitNoteLengths = ["1/1", "1/2", "1/4", "1/8", "1/16",
+                         "1/32", "1/64", "1/128", "1/256", "1/512"];
+
+// Add more and implement in parser
+// https://abcnotation.com/wiki/abc:standard:v2.2#information_fields
+const supportedHeaders = ['C', 'K', 'L', 'M', 'Q', 'T', 'X'];
 
 let getAccidentalByKey = function(pitch, key) {
     return (key in numFlats) ? (flatsList.slice(0, numFlats[key]).includes(pitch) * -1)
@@ -89,6 +98,63 @@ let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}, tone) {
     return scientificNotation;
 }
 
-const TinyTheory = { abcToScientific: abcToScientific }
+// Naive approach that filters out fractions and integers and checks their order
+// It ignores equal signs and strings
+// Could be extended to support descriptive strings, e.g. "Andante"
+// May want to support string cleanup
+// Valid Examples:
+// 50 | 1/4=50 | 1/4 1/8=50 | 1/4 1/8=120 "Moving"
+let extractTempo = function(q) {
+    // Extract fractions
+    let extraction = q.match(/(?:[1-9][0-9]*|0)(?:\/[1-9][0-9]*)?/g);
+    if (extraction == null) return false;
+
+    // Ensure only the final number is an integer and everything before are fractions
+    // Creates a group of f for fraction i for int.
+    // Valid: 0001, 001, 1 | Invalid: 10, 0, 0101
+    let vals = extraction.map(s => s.includes('/') ? 0 : 1);
+    if (vals.reduce((a, b) => a + b, 0) != 1) return false;
+    if (vals.slice(-1)[0] != 1) return false;
+
+    let bpm = eval(extraction.pop());
+    let beat = extraction.reduce( (a, b) => eval(a) + eval(b), 0 ) || 0.25;
+
+    let qpm = bpm * beat * 4;
+    return qpm;
+}
+
+// Metadata validations/handlers
+let isValidKey = function(key) {
+    return (key.toLowerCase() in numFlats) ? true
+         : (key.toLowerCase() in numSharp) ? true
+         : false
+}
+
+let isValidUnitNoteLength = function(l) { return unitNoteLengths.includes(l); }
+
+// Imperfect since there can be extra info:
+// "sdfsdfs 4/4" returns true
+let isValidTimeSig = function(ts) {
+    let tsReg = /[1-9][0-9]*\/[1-9][0-9]*/; // Fraction Regular Expression
+    return tsReg.test(ts);
+}
+
+let isValidTempo = function(q) {
+    return extractTempo(q) ? true : false;
+}
+
+// This function doesn't appear necessary, since unsupported metadata
+// get parsed as errors...
+let isValidMetaData = function(h) { return supportedHeaders.includes(h); }
+
+const TinyTheory = {
+    abcToScientific: abcToScientific,
+    extractTempo: extractTempo,
+    isValidKey: isValidKey,
+    isValidUnitNoteLength: isValidUnitNoteLength,
+    isValidTimeSig: isValidTimeSig,
+    isValidMetaData: isValidMetaData,
+    isValidTempo: isValidTempo
+}
 
 export default TinyTheory;

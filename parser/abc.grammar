@@ -8,25 +8,39 @@ emptyLine { newline }
 expression { music | Metadata }
 
 Metadata {
+    Book |
     Composer |
+    Discography |
+    FileURL |
     KeySignature |
     NoteLength |
+    Rhythm |
+    Source |
     Tempo |
     TimeSignature |
     Title |
-    TuneNumber
+    TuneNumber |
+    Words |
+    Transcription
 }
 
+Book {"B:" text}
 Composer { "C:" text }
+Discography { "D:" text }
+FileURL { "F:" text}
 KeySignature { "K:" key }
 NoteLength { "L:" number }
+Rhythm { "R:" text}
+Source { "S:" text}
 Tempo { "Q:" string? (frac (frac)* '=')? int string? }
-TimeSignature { "M:" number }
+TimeSignature { "M:" (number | 'C') }
 Title { "T:" text }
 TuneNumber { "X:" int }
+Words { ("W:" | "w:") text}
+Transcription { "Z:" text}
 
 music { Barline | Barline? pattern+ }
-pattern { '(' | ')' | DottedRhythm | event | event Barline }
+pattern { SlurStart | SlurEnd | DottedRhythm | event | event Barline | SlurEnd Barline }
 
 DottedRhythm { event !dotted Dot event }
 
@@ -68,10 +82,11 @@ Barline {
     Duration { number }
     Dot { '<'+ | '>'+ }
 
+    SlurStart { '(' }
+    SlurEnd { ')' }
+
     newline { $[\n\r]+ }
     whitespace { $[ \t]+ }
-
-    "(" ")"
 }
 
 @skip {whitespace | Comment}

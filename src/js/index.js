@@ -91,7 +91,6 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
 // UI Visuals
 function showPosition(currentPosition) {
     let outputString = "";
-    //console.log(currentPosition);
 
     outputString += currentMeasureString(currentPosition);
     if (outputString.length) outputString += " -- ";
@@ -115,9 +114,12 @@ function currentNoteString(currentPosition) {
     let outputString = "";
     if (currentPosition.events.length) {
         let ev = currentPosition.events[0];
-        let note = ev.scientificNotation.note ? ev.scientificNotation.note : 'rest';
-        let dur = ev.scientificNotation.relativeDur;
-        outputString += `Note ${note}, ${dur}`;
+        if (["Note", "Chord", "Rest"].includes(ev.name)) new Promise(function(resolve, reject) {
+            let note = ev.scientificNotation.note ? ev.scientificNotation.note : '';
+            let dur = ev.scientificNotation.relativeDur;
+            outputString += `${ev.name} ${note}, ${dur}`;
+        });
+        else outputString += ev.name.match(/[A-Z][a-z]+/g).join(" ");
     }
 
     return outputString;
@@ -130,8 +132,9 @@ const playNoteWhenTyped = function(scoreHandler, v) {
     // Don't play notes if piece is looping
     if (pbState.state == 'started') return;
 
-    if ((v.changes.inserted.length == 2)) {
-        let inserted = v.changes.inserted[1].text[0];
+    // The very first character insertion has length 1
+    if ((v.changes.inserted.length == 1 || v.changes.inserted.length == 2)) {
+        let inserted = v.changes.inserted[v.changes.inserted.length - 1].text[0];
         if (inserted.length == 1 &&
         "abcdefgABCDEFG,'_^0123456789".split("").includes(inserted)) {
             scoreHandler.playNote();
@@ -216,7 +219,8 @@ function readMeasure(scoreHandler) {
   return keymap.of([{
     key: specialKeyCommand + "m",
     run() {
-        srSpeak(currentMeasureString(scoreHandler.getCurrentPosition()), "assertive");
+        let measureString = currentMeasureString(scoreHandler.getCurrentPosition()) || "No measure selected";
+        srSpeak(measureString, "assertive");
         return true;
     }
   }])
@@ -262,6 +266,6 @@ async function postData(url = '', data = {}) {
   return response.json(); // parses JSON response into native JavaScript objects
 }
 
-// A little hacky?? - This sets up the internal data structure before any
-// input - Maybe store musicxml/braille defaults
+// A little hacky?? - This sets up the internal data structure before any input
+//  Maybe store musicxml/braille defaults
 scoreHandler.generateScoreStructure(view.state.tree.cursor(), view.state)
