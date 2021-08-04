@@ -23,7 +23,8 @@ import { ScoreHandler } from "./score_handler.js";
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
 
-const specialKeyCommand = "Shift-Ctrl-";
+const specialKeyCommand = "s-m-";
+
 
 let timer; // Only send to flask server at a max interval
 
@@ -48,6 +49,7 @@ let startState = EditorState.create({
             ...historyKeymap
         ]),
         playback(scoreHandler), // Custom key commands
+        playback2(scoreHandler),
         stop(scoreHandler),
         toggleLoop(scoreHandler),
         readMeasure(scoreHandler),
@@ -166,16 +168,14 @@ function srSpeak(text, priority) {
 // The tab toggler command  can occur outside of the editor.
 // Thus it is implemented as a raw key input
 function toggleTab(ev) {
-    if (!(ev.ctrlKey && ev.shiftKey && (ev.key == "T"))) return;
-
-    let abcTab = document.getElementById('nav-abc-editor-tab');
-    let brailleTab = document.getElementById('nav-braille-music-tab');
-    let bootstrapTab;
-
-    bootstrapTab = new bootstrap.Tab(abcTab.ariaSelected == "true" ? brailleTab : abcTab);
-    bootstrapTab.show();
-
-    return true;
+    if (ev.metaKey && ev.shiftKey && (ev.key == "0" || ev.key == "9")) {
+        let brailleTab = document.getElementById({
+            "0": "nav-braille-music-tab",
+            "9": "nav-abc-editor-tab"
+        }[ev.key])
+        let bootstrapTab = new bootstrap.Tab(brailleTab);
+        bootstrapTab.show();
+    }
 }
 
 // Callback function that gets called after tab show event
@@ -192,6 +192,15 @@ document.onkeydown = toggleTab;
 function playback(scoreHandler) {
   return keymap.of([{
     key: specialKeyCommand + "Space",
+    preventDefault: true,
+    run() { scoreHandler.playPause(); return true; }
+  }])
+}
+// Hacky!!!
+function playback2(scoreHandler) {
+  return keymap.of([{
+    key: specialKeyCommand + "p",
+    preventDefault: true,
     run() { scoreHandler.playPause(); return true; }
   }])
 }
@@ -199,6 +208,7 @@ function playback(scoreHandler) {
 function stop(scoreHandler) {
   return keymap.of([{
     key: specialKeyCommand + ".",
+    preventDefault: true,
     run() { scoreHandler.stop(); return true; }
   }])
 }
@@ -206,6 +216,7 @@ function stop(scoreHandler) {
 function toggleLoop(scoreHandler) {
   return keymap.of([{
     key: specialKeyCommand + "l",
+    preventDefault: true,
     run() {
         let loopState = scoreHandler.toggleLoop().loop;
         let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
@@ -215,9 +226,11 @@ function toggleLoop(scoreHandler) {
   }])
 }
 
+// Information Commands
 function readMeasure(scoreHandler) {
   return keymap.of([{
-    key: specialKeyCommand + "m",
+    key: "? m",
+    preventDefault: true,
     run() {
         let measureString = currentMeasureString(scoreHandler.getCurrentPosition()) || "No measure selected";
         srSpeak(measureString, "assertive");
@@ -228,7 +241,7 @@ function readMeasure(scoreHandler) {
 
 function readNote(scoreHandler) {
   return keymap.of([{
-    key: specialKeyCommand + "n",
+    key: "? n",
     run() {
         let noteString = currentNoteString(scoreHandler.getCurrentPosition()) || "No note selected";
         srSpeak(noteString, "assertive");

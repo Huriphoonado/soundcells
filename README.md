@@ -49,6 +49,15 @@ The parser was developed and tested separately - a TODO is to merge that code. I
 $ ../node_modules/.bin/lezer-generator abc.grammar -o ../src/js/abc_grammar.js
 ```
 
+## Deploy
+Currently, we are using Heroku to deploy. First, ensure that the main branch is using a production build. Then, use the following:
+
+```bash
+$ git push heroku main 
+$ heroku ps:scale web=1
+$ heroku open   
+```
+
 ## Resources / Notes
 
 ### Bundling JS in Flask app

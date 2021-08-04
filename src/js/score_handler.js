@@ -54,10 +54,8 @@ class ScoreHandler {
 
         // ------------------ 1. ------------------
 
-        console.log(treeCursor);
         treeCursor.firstChild(); // Enter the tree
         do {
-            console.log(treeCursor.node);
             let syntaxNode = treeCursor.node;
             console.log(syntaxNode.type.name);
 
