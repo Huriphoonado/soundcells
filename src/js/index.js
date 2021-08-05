@@ -10,6 +10,7 @@ import {defaultKeymap} from "@codemirror/commands"
 import {HighlightStyle, defaultHighlightStyle} from "@codemirror/highlight"
 import {bracketMatching} from "@codemirror/matchbrackets"
 import {closeBrackets, closeBracketsKeymap} from "@codemirror/closebrackets"
+import {linter, lintKeymap} from "@codemirror/lint"
 
 import * as osmd from "opensheetmusicdisplay"
 
@@ -24,7 +25,6 @@ const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
 
 const specialKeyCommand = "s-m-";
-
 
 let timer; // Only send to flask server at a max interval
 
@@ -46,7 +46,8 @@ let startState = EditorState.create({
         keymap.of([ // Default key commands
             ...closeBracketsKeymap,
             ...defaultKeymap,
-            ...historyKeymap
+            ...historyKeymap,
+            ...lintKeymap
         ]),
         playback(scoreHandler), // Custom key commands
         playback2(scoreHandler),
@@ -55,6 +56,7 @@ let startState = EditorState.create({
         readMeasure(scoreHandler),
         readNote(scoreHandler),
         ABC(), // Parser
+        linter(lintMusic),
         EditorView.updateListener.of((v) => { // Main Event Handler
             let treeCursor = view.state.tree.cursor();
             if(v.docChanged) {
@@ -89,6 +91,35 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawSubtitle: false,
   drawPartNames: false
 });
+
+// Linter
+// Called when the editor is idle after changes have been made
+// Thus, assumes the score handler has finished parsing
+function lintMusic(view) {
+    let diagnostics = [];
+    let rawErrorList = scoreHandler.getErrorList();
+
+    rawErrorList.forEach(erNode => {
+        diagnostics.push({
+            from: erNode.from,
+            to: erNode.to,
+            severity: erNode.severity, // info | warning | error
+            message: erNode.message,
+            actions: [
+                {
+                    name: "fix",
+                    apply(view, from, to) {
+                        view.dispatch( { changes: {from, to, insert: ''} } );
+                    }
+                }
+            ]
+        })
+    });
+
+    console.log('lint', diagnostics);
+
+    return diagnostics;
+}
 
 // UI Visuals
 function showPosition(currentPosition) {
@@ -189,6 +220,7 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(t => {
 
 document.onkeydown = toggleTab;
 
+// Combine these to one function!
 function playback(scoreHandler) {
   return keymap.of([{
     key: specialKeyCommand + "Space",

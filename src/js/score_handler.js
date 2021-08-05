@@ -65,7 +65,10 @@ class ScoreHandler {
                 let newElems = handleNode(syntaxNode, treeCursor, editorState);
                 newElems.forEach(el => {
                     if (el.name == '⚠') this.addError(el)
-                    else flatList.push(el);
+                    else {
+                        if ('⚠' in el) this.addError(el, 'warning');
+                        flatList.push(el)
+                    };
                 });
             }
         } while (treeCursor.nextSibling());
@@ -201,10 +204,11 @@ class ScoreHandler {
                             runningDuration += e.scientificNotation.seconds;
                         }
                     });
-                    m.isComplete = (m.duration == 1);
+                    m.isComplete = (Math.abs(m.duration - 1) < 0.01 ||
+                                    m.measure == 0);
                     m.comment = m.measure == 0 ? 'Pickup'
                               : m.duration - 1 > 0.01 ? 'Overfilled'
-                              : m.duration  - 1 < 0.01 < 1 ? 'Underfilled'
+                              : m.duration - 1 < -0.01 ? 'Underfilled'
                               : m.position.length < 2 ? 'No right barline'
                               : 'Valid'
                 });
@@ -222,7 +226,36 @@ class ScoreHandler {
         return { abc: this.getABCOutput(), errorList: this.errors };
     }
 
-    addError(obj) { this.errorList.push(obj); }
+    addError(obj, severity="error") {
+        if (obj.position[0] == obj.position[1]) return; // ignore no-character errors
+        let newError = {
+            from: obj.position[0],
+            to: obj.position[1],
+            severity: severity,
+        };
+        let errType = obj.name == '⚠' ? `ABC ${severity}:` : `${obj.name} ${severity}:`;
+        let errSourceText = obj.rawText;
+
+        // case where broken text in the middle of a node
+        if ('⚠' in obj) {
+            let errText = obj['⚠'];
+            let rawText = obj['rawText'];
+
+            // substring error
+            // Example assss2 => ssss is the error, while a2 is valid note
+            let errIndex = rawText.indexOf(errText);
+            if (errIndex != -1) {
+                newError.from = obj.position[0] + errIndex;
+                newError.to = obj.position[0] + errIndex + errText.length;
+                errSourceText = errText;
+
+                // Modifies the raw text to improve output!! (Maybe not great?)
+                obj['rawText'] = rawText.replace(errText, '');
+            }
+        }
+        newError.message = `${errType} '${errSourceText}' can't be processed and is ignored.`;
+        this.errorList.push(newError);
+    }
 
     // Returns an object containing the current measure and event that the
     // cursor is on - both properties may be empty
@@ -347,6 +380,8 @@ class ScoreHandler {
         }
     }
 
+    getErrorList() { return this.errorList; }
+
     // Add audio playback events to the Tone timeline
     scheduleEvents() {
         Tone.Transport.cancel(0);
@@ -426,12 +461,7 @@ let handleNode = function(node, treeCursor, editorState) {
     let res = (name in fs) ? fs[name](node, treeCursor, editorState)
                          : extractGenericInfo(node, treeCursor, editorState);
 
-    // If part of a node is broken - it can pick up a Warning property
     let resArray = Array.isArray(res) ? res : [res];
-    resArray.forEach(r => {
-        if ('⚠' in r) r.name = '⚠'; // Handle error better!
-    });
-
     return (resArray); // ensure list
 }
 
@@ -467,6 +497,10 @@ let handleNote = function(node, treeCursor, editorState,) {
         includedMusicInfo[contentType] = content;
     } while (localCursor.nextSibling());
 
+    if (noteObj.name == 'Note' && includedMusicInfo.pitch == undefined) {
+        noteObj.name = '⚠';
+    }
+
     // Merge so that the included music info overwrites the defaults
     return {
         ...noteObj,
@@ -474,6 +508,7 @@ let handleNote = function(node, treeCursor, editorState,) {
     };
 }
 
+// Maybe these should be internal functions...
 let handleChord = function(node, treeCursor, editorState) {
     let chordObj = extractGenericInfo(node, treeCursor, editorState);
     chordObj['preText'] = "";
@@ -488,9 +523,14 @@ let handleChord = function(node, treeCursor, editorState) {
             let localNode = localCursor.node;
             if (localNode.type.name == "Note") {
                 let newNote = handleNote(localNode, localCursor, editorState);
+
                 // For some reason, the parser will fill in a blank note node
                 // to complete the parse even if there are are no notes
-                if (newNote.pitch == undefined) throw "Empty or incorrect chord.";
+                if (newNote.pitch == undefined) throw "Empty Chord.";
+
+                // fix this - should fix text and limit to error
+                // Or, handleNote should be in charge of errors
+                if ('⚠' in newNote) throw "Incorrect Chord.";;
                 notesInChord.push(newNote);
             }
         } while (localCursor.nextSibling());
