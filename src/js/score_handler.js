@@ -62,13 +62,10 @@ class ScoreHandler {
             // Filter out errors (keep separate) and comments (throw away)
             // Create a flat list of top-level nodes that we care about
             if (!['Comment', 'Program'].includes(syntaxNode.type.name)) {
-                let newElems = handleNode(syntaxNode, treeCursor, editorState);
+                let newElems = this._handleNode(syntaxNode, treeCursor, editorState);
                 newElems.forEach(el => {
                     if (el.name == '⚠') this.addError(el)
-                    else {
-                        if ('⚠' in el) this.addError(el, 'warning');
-                        flatList.push(el)
-                    };
+                    else flatList.push(el);
                 });
             }
         } while (treeCursor.nextSibling());
@@ -96,7 +93,7 @@ class ScoreHandler {
                     section += 1;
                 }
                 // Add the metadata
-                let { k, v } = handleMetadata(o);
+                let { k, v } = this._handleMetadata(o);
                 newStructure[section]['metadata'][k] = v;
             }
 
@@ -227,13 +224,16 @@ class ScoreHandler {
     }
 
     addError(obj, severity="error") {
+        console.log(obj);
         if (obj.position[0] == obj.position[1]) return; // ignore no-character errors
         let newError = {
             from: obj.position[0],
             to: obj.position[1],
             severity: severity,
         };
-        let errType = obj.name == '⚠' ? `ABC ${severity}:` : `${obj.name} ${severity}:`;
+        let errType = obj.name != '⚠'         ? `${obj.name} ${severity}:`
+                    : obj.source != undefined ? `${obj.source} ${severity}:`
+                    : `ABC ${severity}:`;
         let errSourceText = obj.rawText;
 
         // case where broken text in the middle of a node
@@ -315,7 +315,7 @@ class ScoreHandler {
                     else if (m.position.length == 2) abcOutput += m.barlines[0];
                 });
             }
-            abcOutput += '\n'; // abc scores terminate with newlines
+            abcOutput += '\n'; // abc terminates with newline, hanging \n fine
         });
 
         if (!this.hasNotes()) abcOutput += this.default.music += '\n';
@@ -442,190 +442,199 @@ class ScoreHandler {
 
         return Tone.start().then(self.audioStarted = true);
     }
-}
 
-// Helper Functions
-// Largely these convert from one form of data to another
+    // handlers
+    // Grabs relevent information from a syntax node
+    // Returns a list because some nodes may return multiple elements
+    _handleNode(node, treeCursor, editorState) {
+        let fs = {
+            'Chord': this._handleChord,
+            'Note': this._handleNote,
+            'Rest': this._handleNote,
+            'DottedRhythm': this._handleDotted
+        };
+        let name = node.type.name;
 
-// Grabs relevent information from a syntax node
-// Returns a list because some nodes may return multiple elements
-let handleNode = function(node, treeCursor, editorState) {
-    let fs = {
-        'Chord': handleChord,
-        'Note': handleNote,
-        'Rest': handleNote,
-        'DottedRhythm': handleDotted
-    };
-    let name = node.type.name;
+        let res = (name in fs) ? fs[name].call(this, node, treeCursor, editorState)
+                             : this._extractGenericInfo(node, treeCursor, editorState);
 
-    let res = (name in fs) ? fs[name](node, treeCursor, editorState)
-                         : extractGenericInfo(node, treeCursor, editorState);
-
-    let resArray = Array.isArray(res) ? res : [res];
-    return (resArray); // ensure list
-}
-
-// Information attached to any node we care about like what it is,
-// it's content, and where it is in the editor
-let extractGenericInfo = function(node, treeCursor, editorState) {
-    return {
-        name: node.type.name,
-        rawText: editorState.sliceDoc(treeCursor.from, treeCursor.to),
-        position: [treeCursor.from, treeCursor.to],
-    };
-}
-
-// Notes and Rests
-let handleNote = function(node, treeCursor, editorState,) {
-    let noteObj = extractGenericInfo(node, treeCursor, editorState);
-
-
-    noteObj['preText'] = "";  // default values
-    noteObj['postText'] = ""; // Include as optional arg?
-    noteObj['duration'] = "1";
-    if (noteObj.name == 'Note') {
-        noteObj['accidental'] = "";
-        noteObj['octave'] = "";
+        let resArray = Array.isArray(res) ? res : [res];
+        return (resArray); // ensure list
     }
 
-    let includedMusicInfo = {};
-    let localCursor = node.cursor;
-    localCursor.firstChild();
-    do {
-        let contentType = localCursor.node.type.name.toLowerCase();
-        let content = editorState.sliceDoc(localCursor.from, localCursor.to);
-        includedMusicInfo[contentType] = content;
-    } while (localCursor.nextSibling());
-
-    if (noteObj.name == 'Note' && includedMusicInfo.pitch == undefined) {
-        noteObj.name = '⚠';
+    // Information attached to any node we care about like what it is,
+    // it's content, and where it is in the editor
+    _extractGenericInfo(node, treeCursor, editorState) {
+        return {
+            name: node.type.name,
+            rawText: editorState.sliceDoc(treeCursor.from, treeCursor.to),
+            position: [treeCursor.from, treeCursor.to],
+        };
     }
 
-    // Merge so that the included music info overwrites the defaults
-    return {
-        ...noteObj,
-        ...includedMusicInfo
-    };
-}
+    // Notes and Rests
+    _handleNote(node, treeCursor, editorState,) {
+        let noteObj = this._extractGenericInfo(node, treeCursor, editorState);
 
-// Maybe these should be internal functions...
-let handleChord = function(node, treeCursor, editorState) {
-    let chordObj = extractGenericInfo(node, treeCursor, editorState);
-    chordObj['preText'] = "";
-    chordObj['postText'] = "";
+        noteObj['preText'] = "";  // default values
+        noteObj['postText'] = ""; // Include as optional arg?
+        noteObj['duration'] = "1";
+        if (noteObj.name == 'Note') {
+            noteObj['accidental'] = "";
+            noteObj['octave'] = "";
+        }
 
-    try {
-        let notesInChord = [];
+        let includedMusicInfo = {};
         let localCursor = node.cursor;
-
         localCursor.firstChild();
         do {
-            let localNode = localCursor.node;
-            if (localNode.type.name == "Note") {
-                let newNote = handleNote(localNode, localCursor, editorState);
-
-                // For some reason, the parser will fill in a blank note node
-                // to complete the parse even if there are are no notes
-                if (newNote.pitch == undefined) throw "Empty Chord.";
-
-                // fix this - should fix text and limit to error
-                // Or, handleNote should be in charge of errors
-                if ('⚠' in newNote) throw "Incorrect Chord.";;
-                notesInChord.push(newNote);
-            }
+            let contentType = localCursor.node.type.name.toLowerCase();
+            let content = editorState.sliceDoc(localCursor.from, localCursor.to);
+            includedMusicInfo[contentType] = content;
         } while (localCursor.nextSibling());
 
-        chordObj['notes'] = [];
-        chordObj['duration'] = notesInChord[0].duration;
-        notesInChord.forEach(nObj => { // pre/postText | positions here?
-            chordObj.notes.push({
-                pitch: nObj.pitch,
-                accidental: nObj.accidental,
-                octave: nObj.octave,
-                duration: notesInChord[0].duration, // first note determines all
-                rawText: nObj.rawText,
-                name: 'Note'
+        let merged = { ...noteObj, ...includedMusicInfo };
+        if (merged.name == 'Note' && merged.pitch == undefined) {
+            merged.source = merged.name;
+            merged.name = '⚠';
+        }
+
+        if ('⚠' in merged) this.addError(merged, 'warning');
+
+        // Merge so that the included music info overwrites the defaults
+        return merged;
+    }
+
+    _handleChord(node, treeCursor, editorState) {
+        let chordObj = this._extractGenericInfo(node, treeCursor, editorState);
+        chordObj['preText'] = "";
+        chordObj['postText'] = "";
+
+        try {
+            let notesInChord = [];
+            let localCursor = node.cursor;
+
+            localCursor.firstChild();
+            do {
+                let localNode = localCursor.node;
+                if (localNode.type.name == "Note") {
+                    let newNote = this._handleNote(localNode, localCursor, editorState);
+
+                    // For some reason, the parser will fill in a blank note node
+                    // to complete the parse even if there are are no notes
+                    if (newNote.pitch == undefined) throw "Empty Chord.";
+
+                    // fix this - should fix text and limit to error
+                    // Or, handleNote should be in charge of errors
+                    if (newNote.name != '⚠') notesInChord.push(newNote);
+                }
+            } while (localCursor.nextSibling());
+
+            chordObj['notes'] = [];
+            chordObj['duration'] = notesInChord[0].duration;
+            notesInChord.forEach(nObj => { // pre/postText | positions here?
+                chordObj.notes.push({
+                    pitch: nObj.pitch,
+                    accidental: nObj.accidental,
+                    octave: nObj.octave,
+                    duration: notesInChord[0].duration, // first note determines all
+                    rawText: nObj.rawText,
+                    name: 'Note'
+                });
             });
-        });
-
+            chordObj.rawText = `[${notesInChord.reduce(((a, n) => a + n.rawText), '')}]`;
+        }
+        catch (e) { chordObj.source = chordObj.name; chordObj.name = '⚠'; }
+        finally { return chordObj; }
     }
-    catch (e) { chordObj.name = '⚠'; }
-    finally { return chordObj; }
-}
 
-// Takes a Dotted rhythm node and returns two note or chord children
-// Example ABC: _A4 >> [bde]
-let handleDotted = function(node, treeCursor, editorState) {
-    let localCursor = node.cursor;
-    let dottedGroup = [];
-    let dottedNode;
-    let funcs = {
-        'Chord': handleChord,
-        'Note': handleNote,
-        'Rest': handleNote,
-    }
-    // Extract the inner text and process the outer node
-    try {
-        localCursor.firstChild();
-        do {
-            let localNode = localCursor.node;
-            let name = localNode.type.name;
+    // Takes a Dotted rhythm node and returns two note or chord children
+    // Example ABC: _A4 >> [bde]
+    _handleDotted(node, treeCursor, editorState) {
+        let localCursor = node.cursor;
+        let dottedGroup = [];
+        let dottedNode;
+        let funcs = {
+            'Chord': this._handleChord,
+            'Note': this._handleNote,
+            'Rest': this._handleNote,
+        }
+        // Extract the inner text and process the outer node
+        try {
+            localCursor.firstChild();
+            do {
+                let localNode = localCursor.node;
+                let name = localNode.type.name;
 
-            if (name == 'Dot')  {
-                dottedNode = extractGenericInfo(localNode, localCursor, editorState);
+                if (name == 'Dot')  {
+                    dottedNode = this._extractGenericInfo(localNode, localCursor, editorState);
+                    console.log('here', dottedNode);
+                }
+                else if (name in funcs) {
+                    dottedGroup.push(funcs[name].call(this, localNode, localCursor, editorState));
+                }
+                else {
+                    let brokenInnerNode = this._extractGenericInfo(localNode, localCursor, editorState);
+                    brokenInnerNode.source = "Dot";
+                    this.addError(brokenInnerNode, 'warning');
+                }
+
+            } while (localCursor.nextSibling());
+
+            // The middle dot affects the two outer note/chord/rest nodes
+            if (dottedGroup.map(n => n.name != '⚠').length == 2) {
+                dottedGroup[0].postText = dottedNode.rawText;
+                dottedGroup[0].rawText += dottedNode.rawText;
+                dottedGroup[0].position[1] = dottedNode.position[1];
+
+                dottedGroup[1].preText = dottedNode.rawText;
             }
-
             else {
-                dottedGroup.push(funcs[name](localNode, localCursor, editorState));
+                dottedNode.source = dottedNode.name;
+                dottedNode.name = '⚠';
+                dottedGroup.push(dottedNode);
             }
 
-        } while (localCursor.nextSibling());
-
-        // The middle dot affects the two outer note/chord/rest nodes
-        dottedGroup[0].postText = dottedNode.rawText;
-        dottedGroup[0].rawText += dottedNode.rawText;
-        dottedGroup[0].position[1] = dottedNode.position[1];
-
-        dottedGroup[1].preText = dottedNode.rawText;
-
+        } catch (e) {
+            console.log(e);
+            dottedGroup = this._extractGenericInfo(node,treeCursor, editorState);
+            dottedGroup.name = '⚠';
+        } finally { return dottedGroup; }
     }
-    catch (e) {
-        dottedGroup = extractGenericInfo(node,treeCursor, editorState);
-        dottedGroup.name = '⚠';
+
+    // Takes a metadata string and returns a keyvalue pair
+    // Certain metadata have specific
+    _handleMetadata(md, def={K:'c', L:'1/4', M:'4/4', Q: 120}) {
+        let newMetadata = md.rawText.split(":");
+        let k = newMetadata.shift();
+        let v = newMetadata.join('').trim();
+
+        // Special Cases - Tempo, Base Duration, Time Sig,  KeySig
+        if (k == "K" && !TinyTheory.isValidKey(v)) {
+            // throw error;
+            v = def.K;
+        }
+
+        if (k == "L" && !TinyTheory.isValidUnitNoteLength(v)) {
+            // throw error
+            v = def.L;
+        }
+
+        if (k == "M" && !TinyTheory.isValidTimeSig(v)) {
+            // throw error
+            v = def.M;
+        }
+
+        if (k == "Q" && !TinyTheory.isValidTempo(v)) {
+            // throw error
+            v = def.Q;
+        }
+
+        return {k, v}
     }
-    finally { return dottedGroup; }
 }
 
-// Takes a metadata string and returns a keyvalue pair
-// Certain metadata have specific
-let handleMetadata = function(md, def={K:'c', L:'1/4', M:'4/4', Q: 120}) {
-    let newMetadata = md.rawText.split(":");
-    let k = newMetadata.shift();
-    let v = newMetadata.join('').trim();
 
-    // Special Cases - Tempo, Base Duration, Time Sig,  KeySig
-    if (k == "K" && !TinyTheory.isValidKey(v)) {
-        // throw error;
-        v = def.K;
-    }
-
-    if (k == "L" && !TinyTheory.isValidUnitNoteLength(v)) {
-        // throw error
-        v = def.L;
-    }
-
-    if (k == "M" && !TinyTheory.isValidTimeSig(v)) {
-        // throw error
-        v = def.M;
-    }
-
-    if (k == "Q" && !TinyTheory.isValidTempo(v)) {
-        // throw error
-        v = def.Q;
-    }
-
-    return {k, v}
-}
 
 // Tone.js Synthesizer setup
 let setupSynth = function() {
@@ -654,7 +663,6 @@ let setupSynth = function() {
     })
 
     let verb = new Tone.Reverb();
-
     synth.connect(verb).toDestination();
 
     return synth;
