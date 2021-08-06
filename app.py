@@ -1,7 +1,7 @@
 from io import BytesIO
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from music21 import converter, braille, midi, musicxml, abcFormat, stream
+from music21 import converter, braille, tempo, midi, musicxml, abcFormat, stream
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +34,10 @@ def getuserinput():
             # abcFormat.translate.abcToStreamScore(newABC)
 
             abcTextSample = converter.parse(data, format='abc')
-            # abcTextSample.show('text')
+            for el in abcTextSample.recurse().getElementsByClass(tempo.MetronomeMark):
+                el.number = int(el.number) # Decimals break braille conversion
+
+            #abcTextSample.show('text')
 
             # Music XML
             mxml = musicxml.m21ToXml.GeneralObjectExporter(abcTextSample).parse().decode('utf-8').strip()

@@ -24,7 +24,7 @@ import { ScoreHandler } from "./score_handler.js";
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
 
-const specialKeyCommand = "s-m-";
+const specialKeyCommand = "s-Mod-";
 
 let timer; // Only send to flask server at a max interval
 
@@ -49,10 +49,6 @@ let startState = EditorState.create({
             ...historyKeymap,
             ...lintKeymap
         ]),
-        playback(scoreHandler), // Custom key commands
-        playback2(scoreHandler),
-        stop(scoreHandler),
-        toggleLoop(scoreHandler),
         readMeasure(scoreHandler),
         readNote(scoreHandler),
         ABC(), // Parser
@@ -117,7 +113,6 @@ function lintMusic(view) {
     });
 
     console.log('lint', diagnostics);
-
     return diagnostics;
 }
 
@@ -197,15 +192,49 @@ function srSpeak(text, priority) {
 
 // Key Commands
 // The tab toggler command  can occur outside of the editor.
-// Thus it is implemented as a raw key input
-function toggleTab(ev) {
-    if (ev.metaKey && ev.shiftKey && (ev.key == "0" || ev.key == "9")) {
+function globalKeyEvents(ev) {
+    // Toggle Tab
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "0" || ev.key == "9")) {
         let brailleTab = document.getElementById({
             "0": "nav-braille-music-tab",
             "9": "nav-abc-editor-tab"
         }[ev.key])
         let bootstrapTab = new bootstrap.Tab(brailleTab);
         bootstrapTab.show();
+
+        event.preventDefault();
+        return true;
+    }
+
+    // Play / Pause
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.keyCode == 32)) {
+        scoreHandler.playPause();
+        event.preventDefault();
+        return true;
+    }
+
+    // Toggle Loop
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.keyCode == 32)) {
+        let loopState = scoreHandler.toggleLoop().loop;
+        let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
+        srSpeak(msg);
+
+        event.preventDefault();
+        return true;
+    }
+
+    // Toggle Loop
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "l")) {
+        scoreHandler.toggleLoop();
+        event.preventDefault();
+        return true;
+    }
+
+    // Stop
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == ".")) {
+        scoreHandler.stop();
+        event.preventDefault();
+        return true;
     }
 }
 
@@ -218,45 +247,7 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(t => {
     })
 });
 
-document.onkeydown = toggleTab;
-
-// Combine these to one function!
-function playback(scoreHandler) {
-  return keymap.of([{
-    key: specialKeyCommand + "Space",
-    preventDefault: true,
-    run() { scoreHandler.playPause(); return true; }
-  }])
-}
-// Hacky!!!
-function playback2(scoreHandler) {
-  return keymap.of([{
-    key: specialKeyCommand + "p",
-    preventDefault: true,
-    run() { scoreHandler.playPause(); return true; }
-  }])
-}
-
-function stop(scoreHandler) {
-  return keymap.of([{
-    key: specialKeyCommand + ".",
-    preventDefault: true,
-    run() { scoreHandler.stop(); return true; }
-  }])
-}
-
-function toggleLoop(scoreHandler) {
-  return keymap.of([{
-    key: specialKeyCommand + "l",
-    preventDefault: true,
-    run() {
-        let loopState = scoreHandler.toggleLoop().loop;
-        let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
-        srSpeak(msg);
-        return true;
-    }
-  }])
-}
+document.onkeydown = globalKeyEvents;
 
 // Information Commands
 function readMeasure(scoreHandler) {
