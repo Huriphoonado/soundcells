@@ -88,6 +88,33 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawPartNames: false
 });
 
+// Set up braille, settings, and save modals
+const modals = {};
+let focusOnView = function() {
+    if (view.hadFocus || view.forceFocus) {setTimeout(() => view.focus(), 10)};
+    view.hadFocus = false;
+    view.forceFocus = false;
+}
+
+let mm = [['braille', 'modal'], ['settings', 'offcanvas'], ['save', 'offcanvas']];
+mm.forEach(m => {
+    modals[m[0]] = document.getElementById(`${m[0]}View`);
+    modals[m[0]].addEventListener(`hidden.bs.${m[1]}`, focusOnView);
+});
+
+
+// modals['braille'] = document.getElementById(`brailleView`);
+// modals['braille'].addEventListener('hidden.bs.modal', focusOnView);
+//
+// modals['settings'] = document.getElementById(`settingsView`);
+// modals['settings'].addEventListener('hidden.bs.offcanvas', focusOnView);
+//
+// modals['save'] = document.getElementById(`saveView`);
+// modals['save'].addEventListener('hidden.bs.offcanvas', (ev, forceFocus=false) => {
+//     if (view.hadFocus || forceFocus) {setTimeout(() => view.focus(), 10)};
+//     view.hadFocus = false;
+// });
+
 // Linter
 // Called when the editor is idle after changes have been made
 // Thus, assumes the score handler has finished parsing
@@ -193,16 +220,35 @@ function srSpeak(text, priority) {
 // Key Commands
 // The tab toggler command  can occur outside of the editor.
 function globalKeyEvents(ev) {
-    // Toggle Tab
-    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "0" || ev.key == "9")) {
-        let brailleTab = document.getElementById({
-            "0": "nav-braille-music-tab",
-            "9": "nav-abc-editor-tab"
-        }[ev.key])
-        let bootstrapTab = new bootstrap.Tab(brailleTab);
-        bootstrapTab.show();
-
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && ev.key == "0") {
         event.preventDefault();
+        if (view.hasFocus) {
+            bootstrap.Modal.getOrCreateInstance(modals.braille).show();
+            view.hadFocus = true;
+        }
+        else {
+            // hiding a modal may move focus, so this variable forces it
+            // back to the editor.
+            let active = Object.values(modals)
+                        .filter(m => m.getAttribute("aria-hidden") == null);
+            if (active.length) {
+                view.forceFocus = true;
+                active[0].classList.contains('offcanvas') ?
+                    bootstrap.Offcanvas.getOrCreateInstance(active[0]).hide()
+                  : bootstrap.Modal.getOrCreateInstance(active[0]).hide();
+            }
+            else view.focus();
+        };
+
+        return true;
+    }
+
+    // Save Menu
+    if ((ev.metaKey || ev.ctrlKey) && ev.key == "s") {
+        event.preventDefault();
+        if (view.hasFocus) view.hadFocus = true;
+        bootstrap.Offcanvas.getOrCreateInstance(modals.save).toggle();
+
         return true;
     }
 
@@ -214,18 +260,11 @@ function globalKeyEvents(ev) {
     }
 
     // Toggle Loop
-    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.keyCode == 32)) {
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "l")) {
         let loopState = scoreHandler.toggleLoop().loop;
         let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
         srSpeak(msg);
 
-        event.preventDefault();
-        return true;
-    }
-
-    // Toggle Loop
-    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "l")) {
-        scoreHandler.toggleLoop();
         event.preventDefault();
         return true;
     }
