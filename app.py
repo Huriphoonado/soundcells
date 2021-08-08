@@ -15,6 +15,7 @@ def getuserinput():
         # Data Responses
         error = ""
         brailleFile = ""
+        asciiBraille = ""
         mxml = ""
         mf = ""
         midiBytes = b''
@@ -44,6 +45,7 @@ def getuserinput():
 
             # Braille
             brailleFile = braille.translate.objectToBraille(abcTextSample)
+            asciiBraille = braille.basic.brailleUnicodeToBrailleAscii(brailleFile)
 
             # MIDI
             # I could not figure out how to send this to the web app
@@ -57,7 +59,7 @@ def getuserinput():
         except converter.ConverterException:
             error = "Invalid syntax. Unable to convert."
 
-        send_data = {"braille": brailleFile, "musicxml": mxml, "error": error}
+        send_data = {"braille": brailleFile, "asciiBraille": asciiBraille, "musicxml": mxml, "error": error}
         return jsonify(send_data)
 
 # Home page

@@ -98,6 +98,7 @@ document.getElementById('downloadButton').onclick = function() {
 }
 fileDownloader.notifications = document.getElementById("saveNotifications");
 fileDownloader.attachHTML('abc', document.getElementById('abcCheck'));
+fileDownloader.attachHTML('brf', document.getElementById('brailleMusicCheck'));
 fileDownloader.attachHTML('xml', document.getElementById('musicXMLCheck'));
 
 // Set up braille, settings, and save modals
@@ -316,10 +317,14 @@ const sendABC = (abcCode) => {
     postData('/data', { userdata: abcCode })
     .then(data => {
         document.getElementById('braille').innerHTML = data.braille || "";
+        fileDownloader.setContent('brf', data.asciiBraille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
-            .then( visualScore.render() )
+            .then( v => {
+                visualScore.render();
+                console.log(osmd);
+            } )
         }
     })
 }

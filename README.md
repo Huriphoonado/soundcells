@@ -53,12 +53,30 @@ $ ../node_modules/.bin/lezer-generator abc.grammar -o ../src/js/abc_grammar.js
 Currently, we are using Heroku to deploy. First, ensure that the main branch is using a production build. Then, use the following:
 
 ```bash
-$ git push heroku main 
+$ git push heroku main
 $ heroku ps:scale web=1
 $ heroku open   
 ```
 
-## Resources / Notes
+## Tools
+### Python
+* [Flask](https://flask.palletsprojects.com/en/2.0.x/)
+* [music21](https://web.mit.edu/music21/)
+
+### Web
+* [CodeMirror 6](https://codemirror.net/6/)
+* [Lezer](https://lezer.codemirror.net)
+* [Bootstrap 5](https://getbootstrap.com)
+* [Tone](https://tonejs.github.io)
+* [Open Sheet Music Display](https://opensheetmusicdisplay.org)
+* [JSZip](https://stuk.github.io/jszip/)
+* [FileSaver](https://github.com/eligrey/FileSaver.js/)
+
+### Dev
+* [Heroku](https://www.heroku.com)
+* [Webpack](https://webpack.js.org)
+
+## Notes
 
 ### Bundling JS in Flask app
 I could not figure out a clean way to use ES5 require statements and modules installed with npm along with Flask (hence the need for two processes running during development). I tried using [Flask-Assets](https://flask-assets.readthedocs.io/en/latest/), but there was only support for minification and not for bundling files included with require. I looked into creating a [custom filter](https://webassets.readthedocs.io/en/latest/custom_filters.html) and found an [example with esbuild that looked promising](https://haliphax.dev/2020/09/minifying-javascript-using-esbuild-with-flask-assets/), but it kept repeatedly getting an error message. The current solution is based on this [2017 blog post](https://github.com/jrybicki-jsc/flasknpm).

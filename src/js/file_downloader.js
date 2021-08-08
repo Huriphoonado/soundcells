@@ -10,7 +10,8 @@ class FileDownloader {
 
         this.files = {
             abc: { content: '', ext: '.abc', el: '' },
-            xml: { content: '', ext: '.xml', el: '' }
+            brf: { content: '', ext: '.brf', el: '' },
+            xml: { content: '', ext: '.xml', el: '' },
         }
     }
 
