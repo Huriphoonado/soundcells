@@ -382,6 +382,11 @@ class ScoreHandler {
 
     getErrorList() { return this.errorList; }
 
+    getTitle() {
+        return this.scoreStructure.length ? this.default.metadata.T
+                                          : this.scoreStructure[0].metadata.T;
+    }
+
     // Add audio playback events to the Tone timeline
     scheduleEvents() {
         Tone.Transport.cancel(0);
@@ -669,34 +674,3 @@ let setupSynth = function() {
 }
 
 export { ScoreHandler };
-
-/*
-Event List
-[
-    {
-        measure: 1,
-        barlines: ['|', '|'],
-        position: [10, 12],
-        isComplete: true,
-        status: 'complete' | 'missing end bar' | 'too many notes' | 'too few notes',
-        events: [
-            {
-                type: ..., 'Note, Chord, Rest'
-                position: ...,
-                standard: ..., // string or list of strings
-                rawABC: ...,
-            }
-        ]
-    }
-]
-
-Errors List
-[
-    {
-        error:
-        position:
-        line: ?
-    }
-]
-
-*/

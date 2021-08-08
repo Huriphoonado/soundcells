@@ -11,23 +11,24 @@
                 <input class="form-check-input" type="checkbox" id="abcCheck" checked>
                 <label class="form-check-label" for="abcCheck">ABC Text (.abc)</label>
             </div>
-            <div class="form-check form-switch">
+            <!-- <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="brailleMusicCheck" checked>
                 <label class="form-check-label" for="brailleMusicCheck">Braille Music (.brf)</label>
             </div>
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="printScoreCheck" checked>
                 <label class="form-check-label" for="printScoreCheck">Print Score (.pdf)</label>
-            </div>
+            </div> -->
             <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="musicXMLCheck" checked>
                 <label class="form-check-label" for="musicXMLCheck">Music XML (.xml)</label>
             </div>
         </form>
         <div class="d-grid gap-2 py-3">
-            <button type="button" class="btn btn-primary">
+            <button type="button" id="downloadButton" class="btn btn-primary">
                 <i class="bi bi-download" role="img" aria-label="Download"></i>
             </button>
         </div>
+        <div id="saveNotifications"></div>
     </div>
 </div>

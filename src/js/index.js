@@ -14,15 +14,18 @@ import {linter, lintKeymap} from "@codemirror/lint"
 
 import * as osmd from "opensheetmusicdisplay"
 
-import {ABC} from "./abc_language.js"
+import { ABC } from "./abc_language.js"
 
 import { ScoreHandler } from "./score_handler.js";
+import { FileDownloader } from "./file_downloader.js";
 
 // import { Midi } from '@tonejs/midi';
 
 // Variables
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
+
+const fileDownloader = new FileDownloader();
 
 const specialKeyCommand = "s-Mod-";
 
@@ -88,6 +91,15 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawPartNames: false
 });
 
+// Set up file downloader
+document.getElementById('downloadButton').onclick = function() {
+    fileDownloader.setTitle(scoreHandler.getTitle());
+    fileDownloader.download();
+}
+fileDownloader.notifications = document.getElementById("saveNotifications");
+fileDownloader.attachHTML('abc', document.getElementById('abcCheck'));
+fileDownloader.attachHTML('xml', document.getElementById('musicXMLCheck'));
+
 // Set up braille, settings, and save modals
 const modals = {};
 let focusOnView = function() {
@@ -96,24 +108,12 @@ let focusOnView = function() {
     view.forceFocus = false;
 }
 
+// Set up Modal focus behaviors
 let mm = [['braille', 'modal'], ['settings', 'offcanvas'], ['save', 'offcanvas']];
 mm.forEach(m => {
     modals[m[0]] = document.getElementById(`${m[0]}View`);
     modals[m[0]].addEventListener(`hidden.bs.${m[1]}`, focusOnView);
 });
-
-
-// modals['braille'] = document.getElementById(`brailleView`);
-// modals['braille'].addEventListener('hidden.bs.modal', focusOnView);
-//
-// modals['settings'] = document.getElementById(`settingsView`);
-// modals['settings'].addEventListener('hidden.bs.offcanvas', focusOnView);
-//
-// modals['save'] = document.getElementById(`saveView`);
-// modals['save'].addEventListener('hidden.bs.offcanvas', (ev, forceFocus=false) => {
-//     if (view.hadFocus || forceFocus) {setTimeout(() => view.focus(), 10)};
-//     view.hadFocus = false;
-// });
 
 // Linter
 // Called when the editor is idle after changes have been made
@@ -161,7 +161,6 @@ function currentMeasureString(currentPosition) {
         let m = currentPosition.measures[0];
         outputString += `Measure ${m.measure} (${m.comment})`;
     }
-
     return outputString;
 }
 
@@ -176,7 +175,6 @@ function currentNoteString(currentPosition) {
         });
         else outputString += ev.name.match(/[A-Z][a-z]+/g).join(" ");
     }
-
     return outputString;
 }
 
@@ -314,16 +312,17 @@ function readNote(scoreHandler) {
 
 // GET/POST Functions
 const sendABC = (abcCode) => {
+    fileDownloader.setContent('abc', abcCode);
     postData('/data', { userdata: abcCode })
     .then(data => {
         document.getElementById('braille').innerHTML = data.braille || "";
         if (data.musicxml) {
+            fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
             .then( visualScore.render() )
         }
     })
 }
-//sendABC(starterABC);
 
 async function postData(url = '', data = {}) {
   const response = await fetch(url, {
