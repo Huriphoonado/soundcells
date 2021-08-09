@@ -96,9 +96,11 @@ document.getElementById('downloadButton').onclick = function() {
     fileDownloader.setTitle(scoreHandler.getTitle());
     fileDownloader.download();
 }
+fileDownloader.score = visualScore;
 fileDownloader.notifications = document.getElementById("saveNotifications");
 fileDownloader.attachHTML('abc', document.getElementById('abcCheck'));
 fileDownloader.attachHTML('brf', document.getElementById('brailleMusicCheck'));
+fileDownloader.attachHTML('pdf', document.getElementById('printScoreCheck'));
 fileDownloader.attachHTML('xml', document.getElementById('musicXMLCheck'));
 
 // Set up braille, settings, and save modals

@@ -27,8 +27,10 @@
     "@tonejs/midi": "^2.0.27",
     "bootstrap": "^5.0.2",
     "file-saver": "^2.0.5",
+    "jspdf": "^2.3.1",
     "jszip": "^3.7.1",
     "opensheetmusicdisplay": "^1.0.0",
+    "svg2pdf.js": "^2.1.0",
     "tone": "^14.7.77"
   }
 }
