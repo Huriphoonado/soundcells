@@ -221,7 +221,7 @@ function srSpeak(text, priority) {
 // Key Commands
 // The tab toggler command  can occur outside of the editor.
 function globalKeyEvents(ev) {
-    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && ev.key == "0") {
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "9" || ev.key == "(")) {
         event.preventDefault();
         if (view.hasFocus) {
             bootstrap.Modal.getOrCreateInstance(modals.braille).show();
@@ -261,7 +261,7 @@ function globalKeyEvents(ev) {
     }
 
     // Toggle Loop
-    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "l")) {
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "l" || ev.key == "L")) {
         let loopState = scoreHandler.toggleLoop().loop;
         let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
         srSpeak(msg);
@@ -271,7 +271,7 @@ function globalKeyEvents(ev) {
     }
 
     // Stop
-    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == ".")) {
+    if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "." || ev.key == ">")) {
         scoreHandler.stop();
         event.preventDefault();
         return true;
