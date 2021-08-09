@@ -35,7 +35,6 @@ class FileDownloader {
         f2d.filter(f => (f.ext != '.pdf')).forEach(f => {
             zip.file(`${this.title}${f.ext}`, f.content)
         });
-        console.log(zip.files);
 
         let pdfFile = f2d.filter(f => (f.ext == '.pdf'))[0];
         if (pdfFile != undefined) {

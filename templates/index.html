@@ -1,21 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-100">
 <head>
     <title>Sound Cells</title>
 </head>
-<body>
+<body class="d-flex flex-column h-100">
     <!-- Nav -->
     {% include 'nav.html' %}
     <br />
 
     <!-- Body of the page -->
     <div class="container-fluid">
-        <div class="row">
+        <div class="row flex-shrink-0">
             <aside class="col-sm-6 col-md-3">
-                <div class="sticky-sm-top overflow-auto" style="max-height:90vh;">
+                <div class="sticky-sm-top overflow-auto" style="max-height:85vh;">
                     {% include 'abc_cheat.html' %}
                     {% include 'key_commands.html' %}
                     {% include 'tutorial.html' %}
+                    {% include 'example_abc.html' %}
                 </div>
             </aside>
             <main id="main" class="order-1 col-sm-6 col-md-9">
@@ -29,23 +30,10 @@
             </main>
         </div>
     </div>
-    <div class="modal fade" id="brailleView" tabindex="-1" aria-labelledby="brailleViewLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div id="braille" class="modal-body">
-                    ⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁
-                    ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠶⠼⠁⠃⠚⠀⠼⠙⠲⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠼⠁⠀⠐⠪⠺⠹⠱⠣⠅
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include 'footer.html' %}
 
     <!-- Off Canvas Modals -->
+    {% include 'braille_music.html' %}
     {% include 'settings_modal.html' %}
     {% include 'save_modal.html' %}
 

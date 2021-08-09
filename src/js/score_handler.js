@@ -383,7 +383,7 @@ class ScoreHandler {
     getErrorList() { return this.errorList; }
 
     getTitle() {
-        return this.scoreStructure.length ? this.default.metadata.T
+        return !this.scoreStructure.length ? this.default.metadata.T
                                           : this.scoreStructure[0].metadata.T;
     }
 

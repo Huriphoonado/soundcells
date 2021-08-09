@@ -71,6 +71,8 @@ $ heroku open
 * [Open Sheet Music Display](https://opensheetmusicdisplay.org)
 * [JSZip](https://stuk.github.io/jszip/)
 * [FileSaver](https://github.com/eligrey/FileSaver.js/)
+* [jsPDF](https://github.com/MrRio/jsPDF)
+* [svg2pdf](https://github.com/yWorks/svg2pdf.js/)
 
 ### Dev
 * [Heroku](https://www.heroku.com)

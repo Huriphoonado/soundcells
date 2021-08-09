@@ -347,6 +347,55 @@ async function postData(url = '', data = {}) {
   return response.json(); // parses JSON response into native JavaScript objects
 }
 
+// Insert Excerpt Functions
+let examplesDiv = document.getElementById("insertExamples");
+let abcScoreExamples = [
+    {
+        buttonName: 'Mary Had a Little Lamb',
+        abcScore: `T: Mary Had a Little Lamb
+M: 4/4
+C: Nursery Rhyme
+K: Bb
+L: 1/4
+Q: 148
+| D C B, C | D D D2 |
+C C C2 | D F F2 |
+D C B, C | D D D D |
+C C D C | B,4 |]`
+    },
+    {
+        buttonName: 'Bach Cello Suite',
+        abcScore: `T: Cello Suite No. 1 - Prelude
+M: 4/4
+C: J. S. Bach
+K: G
+L: 1/16
+Q: 1/4=76
+| G,, D, B, A, B, D, B, D, G,, D, B, A, B, D, B, D, |
+G,, E, C B, C E, C E, G,, E, C B, C E, C E, |
+G,, F, C B, C F, C F, G,, F, C B, C F, C F, |
+G,, G, B, A, B, G, B, G, G,, G, B, A, B, G, B, F, |]`
+    }
+];
+
+abcScoreExamples.forEach(ex => {
+    let btn = document.createElement('button');
+    btn.setAttribute('type', 'button');
+    btn.classList.add("btn", "btn-outline-primary");
+    btn.innerHTML = ex.buttonName;
+    btn.onclick = function() {
+        let update = view.state.update({
+            changes: {
+                from: 0, to: view.state.doc.length,
+                insert: ex.abcScore
+            }
+        });
+        view.update([update]);
+    }
+    examplesDiv.appendChild(btn);
+});
+
+
 // A little hacky?? - This sets up the internal data structure before any input
 //  Maybe store musicxml/braille defaults
 scoreHandler.generateScoreStructure(view.state.tree.cursor(), view.state)
