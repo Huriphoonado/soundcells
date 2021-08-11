@@ -4,7 +4,7 @@ import * as JSZip from 'jszip';
 import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
 
-import { Alert } from 'bootstrap';
+import { addAlert } from './dom_manip'
 
 class FileDownloader {
     constructor() {
@@ -115,21 +115,6 @@ function createPdf(osmd) {
     });
 
     return Promise.all(svgPromises).then(() => { return pdf; });
-}
-
-function addAlert(message, options) {
-    let location = options.location || document.body;
-    let alertType = options.alertType || 'primary';
-    let alertTime = options.time || 3000;
-
-    let newAlert = document.createElement("div");
-    newAlert.classList.add("alert", "fade", "show", `alert-${alertType}`);
-    newAlert.setAttribute("role", "alert");
-    newAlert.appendChild(document.createTextNode(message));
-    location.appendChild(newAlert);
-
-    let bsAlert = new Alert(newAlert);
-    setTimeout(() => { bsAlert.close() }, alertTime);
 }
 
 export { FileDownloader };

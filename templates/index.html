@@ -21,12 +21,21 @@
             </aside>
             <main id="main" class="order-1 col-sm-6 col-md-9">
                 <h1>ABC Text Editor</h1>
-                <div id="editor"></div>
-                <div id="belowEditor">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#brailleView">Show Braille Music</button>
-                    <span id="info"></span>
+                <div class="row py-1">
+                    <div id="editor"></div>
                 </div>
-                <div id="score"></div>
+                <div class="row" id="belowEditor">
+                    <div class="col-sm">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#brailleView">Show Braille Music</button>
+                    </div>
+                    <div class="col-sm-6" id="editorNotify"></div>
+                    <div class="col-sm">
+                        <p class="text-end" id="info"></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div id="score"></div>
+                </div>
             </main>
         </div>
     </div>

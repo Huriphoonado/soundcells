@@ -19,6 +19,8 @@ import { ABC } from "./abc_language.js"
 import { ScoreHandler } from "./score_handler.js";
 import { FileDownloader } from "./file_downloader.js";
 
+import { addAlert } from "./dom_manip.js"
+
 // import { Midi } from '@tonejs/midi';
 
 // Variables
@@ -198,26 +200,6 @@ const playNoteWhenTyped = function(scoreHandler, v) {
     }
 }
 
-// Screen Reader Speech
-// https://a11y-guidelines.orange.com/en/web/components-examples/make-a-screen-reader-talk/
-function srSpeak(text, priority) {
-    let el = document.createElement("div");
-    let id = "speak-" + Date.now();
-    el.setAttribute("id", id);
-    el.setAttribute("aria-live", priority || "polite"); // "assertive"
-    //el.classList.add("sr-only");
-    el.classList.add("visually-hidden");
-    document.body.appendChild(el);
-
-    window.setTimeout(function () {
-        document.getElementById(id).innerHTML = text;
-    }, 100);
-
-    window.setTimeout(function () {
-        document.body.removeChild(document.getElementById(id));
-    }, 1000);
-}
-
 // Key Commands
 // The tab toggler command  can occur outside of the editor.
 function globalKeyEvents(ev) {
@@ -263,8 +245,10 @@ function globalKeyEvents(ev) {
     // Toggle Loop
     if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "l" || ev.key == "L")) {
         let loopState = scoreHandler.toggleLoop().loop;
-        let msg = `loop ${{true: "on", false: "off"}[loopState]}`;
-        srSpeak(msg);
+        let msg = `Loop ${{true: "on", false: "off"}[loopState]}`;
+        addAlert(msg, {
+            location: document.getElementById('editorNotify'),
+        }); //srSpeak(msg);
 
         event.preventDefault();
         return true;
@@ -296,7 +280,9 @@ function readMeasure(scoreHandler) {
     preventDefault: true,
     run() {
         let measureString = currentMeasureString(scoreHandler.getCurrentPosition()) || "No measure selected";
-        srSpeak(measureString, "assertive");
+        addAlert(measureString, {
+            location: document.getElementById('editorNotify'),
+        }); // srSpeak(measureString, "assertive");
         return true;
     }
   }])
@@ -307,7 +293,10 @@ function readNote(scoreHandler) {
     key: "? n",
     run() {
         let noteString = currentNoteString(scoreHandler.getCurrentPosition()) || "No note selected";
-        srSpeak(noteString, "assertive");
+        addAlert(noteString, {
+            location: document.getElementById('editorNotify'),
+        });
+        //srSpeak(noteString, "assertive");
         return true;
     }
   }])
@@ -351,17 +340,14 @@ async function postData(url = '', data = {}) {
 let examplesDiv = document.getElementById("insertExamples");
 let abcScoreExamples = [
     {
-        buttonName: 'Mary Had a Little Lamb',
-        abcScore: `T: Mary Had a Little Lamb
-M: 4/4
-C: Nursery Rhyme
-K: Bb
+        buttonName: "Zelda's Theme",
+        abcScore: `T: Princess Zelda's Theme
+C: Koji Kondo
+K: G
+Q: 100
+M: 3/4
 L: 1/4
-Q: 148
-| D C B, C | D D D2 |
-C C C2 | D F F2 |
-D C B, C | D D D D |
-C C D C | B,4 |]`
+| B2 d | A2 G1/2 A1/2 | B2 d | A3 | B2 d | a2 g | d2 c1/2 B1/2 | A3 |]`
     },
     {
         buttonName: 'Bach Cello Suite',
@@ -375,6 +361,29 @@ Q: 1/4=76
 G,, E, C B, C E, C E, G,, E, C B, C E, C E, |
 G,, F, C B, C F, C F, G,, F, C B, C F, C F, |
 G,, G, B, A, B, G, B, G, G,, G, B, A, B, G, B, F, |]`
+    },
+    {
+        buttonName: 'Mario Bros Theme',
+        abcScore: `X: 1
+T: Super Mario Bros. Theme
+C: Koji Kondo
+K: C
+L: 1/4
+M: 4/4
+Q: 1/4=180
+| e1/2 e1/2 z1/2 e1/2 z1/2 c1/2 e | g z G z
+| c>G z (E | E1/2) A B _B1/2 A | G2/3 e2/3 g2/3 a f1/2 g1/2
+| z1/2 e c1/2 d1/2 B z1/2 |]`
+    },
+    {
+        buttonName: 'Starter Template',
+        abcScore: `X: 1
+T: Sketch
+C: Me
+K: C
+L: 1/4
+M: 4/4
+| A B c d |]`
     }
 ];
 
