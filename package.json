@@ -11,8 +11,8 @@
   "author": "Willie Payne",
   "license": "ISC",
   "devDependencies": {
+    "@lezer/generator": "^0.15.0",
     "css-loader": "^6.2.0",
-    "lezer-generator": "^0.13.4",
     "postcss": "^8.3.6",
     "postcss-loader": "^6.1.1",
     "sass": "^1.36.0",
@@ -22,7 +22,7 @@
     "webpack-cli": "^4.7.2"
   },
   "dependencies": {
-    "@codemirror/basic-setup": "^0.18.2",
+    "@codemirror/basic-setup": "^0.19.0",
     "@popperjs/core": "^2.9.2",
     "@tonejs/midi": "^2.0.27",
     "bootstrap": "^5.0.2",

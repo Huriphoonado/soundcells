@@ -1,8 +1,8 @@
 import {parser} from "./abc_grammar.js"
-import {LezerLanguage, LanguageSupport,} from "@codemirror/language"
+import {LRLanguage, LanguageSupport,} from "@codemirror/language"
 import {styleTags, tags as t} from "@codemirror/highlight"
 
-export const ABCLanguage = LezerLanguage.define({
+export const ABCLanguage = LRLanguage.define({
   parser: parser.configure({
     props: [
       styleTags({

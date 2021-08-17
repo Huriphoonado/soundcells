@@ -33,7 +33,7 @@ const specialKeyCommand = "s-Mod-";
 
 let timer; // Only send to flask server at a max interval
 
-// Editor
+// Editor 0.18.2
 // use parser syntaxTree
 const abcThing = ABC();
 let startState = EditorState.create({
