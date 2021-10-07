@@ -94,8 +94,8 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
 });
 
 let state = {
-    unicodeBraille: "",
-    asciiBraille: "",
+    unicodeBraille: "⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁ ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠶⠼⠁⠃⠚⠀⠼⠙⠲⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠼⠁⠀⠐⠪⠺⠹⠱⠣⠅",
+    asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
     musicXML: "",
     errors: []
 }
@@ -334,6 +334,10 @@ const sendABC = (abcCode) => {
 //     document.getElementById('asciiCheck').checked ? 
 //     data.asciiBraille : data.braille) || "";
 document.getElementById("showBraille").addEventListener("click", (e) => {
+    //if state is empty sendABC
+    // if(!state.asciiBraille || !state.unicodeBraille){
+    //     sendABC(starterABC);
+    // }
     document.getElementById('braille').innerHTML = (
         document.getElementById('asciiCheck').checked ? 
         state["asciiBraille"] : state["unicodeBraille"]) || "";
