@@ -93,6 +93,13 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawPartNames: false
 });
 
+let state = {
+    unicodeBraille: "",
+    asciiBraille: "",
+    musicXML: "",
+    errors: []
+}
+
 // Set up file downloader
 document.getElementById('downloadButton').onclick = function() {
     fileDownloader.setTitle(scoreHandler.getTitle());
@@ -305,10 +312,13 @@ function readNote(scoreHandler) {
 // GET/POST Functions
 const sendABC = (abcCode) => {
     fileDownloader.setContent('abc', abcCode);
+    console.log(fileDownloader)
     postData('/data', { userdata: abcCode })
     .then(data => {
-        document.getElementById('braille').innerHTML = data.braille || "";
-        fileDownloader.setContent('brf', data.asciiBraille);
+        state["unicodeBraille"] = data.braille;
+        state["asciiBraille"] = data.asciiBraille;
+        // document.getElementById('braille').innerHTML = data.braille || "";
+        fileDownloader.setContent('brf', data.braille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
@@ -319,6 +329,16 @@ const sendABC = (abcCode) => {
         }
     })
 }
+
+// document.getElementById('braille').innerHTML = (
+//     document.getElementById('asciiCheck').checked ? 
+//     data.asciiBraille : data.braille) || "";
+document.getElementById("showBraille").addEventListener("click", (e) => {
+    document.getElementById('braille').innerHTML = (
+        document.getElementById('asciiCheck').checked ? 
+        state["asciiBraille"] : state["unicodeBraille"]) || "";
+});
+
 
 async function postData(url = '', data = {}) {
   const response = await fetch(url, {
