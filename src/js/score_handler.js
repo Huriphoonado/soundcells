@@ -343,6 +343,10 @@ class ScoreHandler {
         if (evList.length == 0) return;
         let ev = evList[0]; // Could support higlighted group
 
+        console.log("ev is: ", ev);
+        if (ev.rawText == '?') {
+            this.synth.triggerAttackRelease("C4, 4n");
+        }
         if (ev.name == 'Note' || ev.name == 'Chord') {
             let note = ev.scientificNotation.note;
             let duration = ev.scientificNotation.seconds;
@@ -638,8 +642,6 @@ class ScoreHandler {
         return {k, v}
     }
 }
-
-
 
 // Tone.js Synthesizer setup
 let setupSynth = function() {

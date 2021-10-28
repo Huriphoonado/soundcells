@@ -1,6 +1,7 @@
 import * as bootstrap from 'bootstrap';
 import '../scss/custom.scss';
 
+
 import {Extension, EditorState} from "@codemirror/state"
 import {EditorView, keymap, highlightSpecialChars, drawSelection, highlightActiveLine} from "@codemirror/view"
 import {Text} from "@codemirror/text"
@@ -17,6 +18,7 @@ import * as osmd from "opensheetmusicdisplay"
 import { ABC } from "./abc_language.js"
 
 import { ScoreHandler } from "./score_handler.js";
+import { Synths } from "./synths.js";
 import { FileDownloader } from "./file_downloader.js";
 
 import { addAlert } from "./dom_manip.js"
@@ -26,6 +28,7 @@ import { addAlert } from "./dom_manip.js"
 // Variables
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
+const synths = new Synths();
 
 const fileDownloader = new FileDownloader();
 
@@ -54,6 +57,7 @@ let startState = EditorState.create({
             ...historyKeymap,
             ...lintKeymap
         ]),
+        //question(),
         readMeasure(scoreHandler),
         readNote(scoreHandler),
         ABC(), // Parser
@@ -92,6 +96,13 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawSubtitle: false,
   drawPartNames: false
 });
+
+let state = {
+    unicodeBraille: "⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁ ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠶⠼⠁⠃⠚⠀⠼⠙⠲⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠼⠁⠀⠐⠪⠺⠹⠱⠣⠅",
+    asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
+    musicXML: "",
+    errors: []
+}
 
 // Set up file downloader
 document.getElementById('downloadButton').onclick = function() {
@@ -260,6 +271,12 @@ function globalKeyEvents(ev) {
         event.preventDefault();
         return true;
     }
+
+    if (ev.key == '?' && view.hasFocus) {
+        synths.playQuestion();
+        console.log('question pressed');
+        return true;
+    }
 }
 
 // Callback function that gets called after tab show event
@@ -274,6 +291,7 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(t => {
 document.onkeydown = globalKeyEvents;
 
 // Information Commands
+
 function readMeasure(scoreHandler) {
   return keymap.of([{
     key: "? m",
@@ -305,10 +323,13 @@ function readNote(scoreHandler) {
 // GET/POST Functions
 const sendABC = (abcCode) => {
     fileDownloader.setContent('abc', abcCode);
+    console.log(fileDownloader)
     postData('/data', { userdata: abcCode })
     .then(data => {
-        document.getElementById('braille').innerHTML = data.braille || "";
-        fileDownloader.setContent('brf', data.asciiBraille);
+        state["unicodeBraille"] = data.braille;
+        state["asciiBraille"] = data.asciiBraille;
+        // document.getElementById('braille').innerHTML = data.braille || "";
+        fileDownloader.setContent('brf', data.braille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
@@ -319,6 +340,20 @@ const sendABC = (abcCode) => {
         }
     })
 }
+
+// document.getElementById('braille').innerHTML = (
+//     document.getElementById('asciiCheck').checked ? 
+//     data.asciiBraille : data.braille) || "";
+document.getElementById("showBraille").addEventListener("click", (e) => {
+    //if state is empty sendABC
+    // if(!state.asciiBraille || !state.unicodeBraille){
+    //     sendABC(starterABC);
+    // }
+    document.getElementById('braille').innerHTML = (
+        document.getElementById('asciiCheck').checked ? 
+        state["asciiBraille"] : state["unicodeBraille"]) || "";
+});
+
 
 async function postData(url = '', data = {}) {
   const response = await fetch(url, {
