@@ -7,7 +7,6 @@ gunicorn==20.0.4
 itsdangerous==1.1.0
 Jinja2==2.11.3
 joblib==1.0.1
-jsmin==2.2.2
 MarkupSafe==2.0.1
 more-itertools==8.8.0
 music21==6.7.1
