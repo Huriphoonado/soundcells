@@ -1,6 +1,7 @@
 import * as bootstrap from 'bootstrap';
 import '../scss/custom.scss';
 
+
 import {Extension, EditorState} from "@codemirror/state"
 import {EditorView, keymap, highlightSpecialChars, drawSelection, highlightActiveLine} from "@codemirror/view"
 import {Text} from "@codemirror/text"
@@ -17,6 +18,7 @@ import * as osmd from "opensheetmusicdisplay"
 import { ABC } from "./abc_language.js"
 
 import { ScoreHandler } from "./score_handler.js";
+import { Synths } from "./synths.js";
 import { FileDownloader } from "./file_downloader.js";
 
 import { addAlert } from "./dom_manip.js"
@@ -26,6 +28,7 @@ import { addAlert } from "./dom_manip.js"
 // Variables
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler();
+const synths = new Synths();
 
 const fileDownloader = new FileDownloader();
 
@@ -54,6 +57,7 @@ let startState = EditorState.create({
             ...historyKeymap,
             ...lintKeymap
         ]),
+        //question(),
         readMeasure(scoreHandler),
         readNote(scoreHandler),
         ABC(), // Parser
@@ -276,6 +280,12 @@ function globalKeyEvents(ev) {
         event.preventDefault();
         return true;
     }
+
+    if (ev.key == '?' && view.hasFocus) {
+        synths.playQuestion();
+        console.log('question pressed');
+        return true;
+    }
 }
 
 // Callback function that gets called after tab show event
@@ -290,6 +300,7 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(t => {
 document.onkeydown = globalKeyEvents;
 
 // Information Commands
+
 function readMeasure(scoreHandler) {
   return keymap.of([{
     key: "? m",
