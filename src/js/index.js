@@ -97,6 +97,15 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawPartNames: false
 });
 
+// X: 1
+// T: Sketch
+// L:1/8 
+// M:4/4 
+// K:Bbmaj 
+// Q:1/4=128
+// G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d | 
+// G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d |]
+
 let state = {
     unicodeBraille: "⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁ ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠶⠼⠁⠃⠚⠀⠼⠙⠲⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠼⠁⠀⠐⠪⠺⠹⠱⠣⠅",
     asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
@@ -340,6 +349,19 @@ const sendABC = (abcCode) => {
         }
     })
 }
+
+document.getElementById("score-zoom").addEventListener("input", (e) => {
+    let zoomValue = parseInt(document.getElementById('score-zoom').value);
+    visualScore.zoom = zoomValue > 50 ? Math.pow(zoomValue / 50, 2) : zoomValue / 50;
+    visualScore.render();
+});
+
+document.getElementById("score-zoom").addEventListener('dblclick', (e) => {
+    document.getElementById('score-zoom').value = 50;
+    visualScore.zoom = 1;
+    visualScore.render();
+    e.stopPropagation();
+});
 
 // document.getElementById('braille').innerHTML = (
 //     document.getElementById('asciiCheck').checked ? 
