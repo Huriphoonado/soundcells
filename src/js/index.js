@@ -93,6 +93,14 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawPartNames: false
 });
 
+const pdfScore = new osmd.OpenSheetMusicDisplay("pdfScore", {
+    autoResize: false,
+    backend: "svg",
+    drawTitle: true,
+    drawSubtitle: false,
+    drawPartNames: false
+});
+
 // X: 1
 // T: Sketch
 // L:1/8 
@@ -114,7 +122,7 @@ document.getElementById('downloadButton').onclick = function() {
     fileDownloader.setTitle(scoreHandler.getTitle());
     fileDownloader.download();
 }
-fileDownloader.score = visualScore;
+fileDownloader.score = pdfScore;
 fileDownloader.notifications = document.getElementById("saveNotifications");
 fileDownloader.attachHTML('abc', document.getElementById('abcCheck'));
 fileDownloader.attachHTML('brf', document.getElementById('brailleMusicCheck'));
@@ -333,6 +341,11 @@ const sendABC = (abcCode) => {
             visualScore.load(data.musicxml)
             .then( v => {
                 visualScore.render();
+                console.log(osmd);
+            } )
+            pdfScore.load(data.musicxml)
+            .then( v => {
+                pdfScore.render();
                 console.log(osmd);
             } )
         }
