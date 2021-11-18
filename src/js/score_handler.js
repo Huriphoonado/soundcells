@@ -5,7 +5,7 @@ import TinyTheory from './tiny_theory';
 // Data structure that tracks the state of the document and represents the score
 // Contains a synthesizer for playback
 class ScoreHandler {
-    constructor() {
+    constructor(options) {
         this.default = {
             metadata: {
                 X: "1",
@@ -29,6 +29,8 @@ class ScoreHandler {
             score: [],
             duration: 0
         }
+
+        if (options.stopCallback) this.stopCallback = options.stopCallback;
 
         let self = this;
         this.playback.part = new Tone.Part(((time, ev) => {
@@ -354,25 +356,38 @@ class ScoreHandler {
         }
     }
 
-    playPause() {
-        if (Tone.Transport.state == "started") this.pause();
+    playPause(playCallback, pauseCallback) {
+        if (Tone.Transport.state == "started"){
+            this.pause(pauseCallback);
+        } 
         else {
             if (Tone.Transport.loop) this.play(Tone.Transport.loopStart);
-            else this.play();
+            else this.play(playCallback);
         }
 
-        return this.getPlaybackState();
+        return Tone.Transport.state;
     }
 
-    play(startTime) {
-        if (!this.audioStarted) return this.startAudio().then(this.play(startTime));
+    play(playCallback) {
+        if (!this.audioStarted) return this.startAudio().then(this.play(playCallback));
 
-        if (!startTime) Tone.Transport.start("+0.01"); // undefined or 0
-        else Tone.Transport.start("+0.01", startTime);
+        Tone.Transport.start("+0.01");
+        if (playCallback) playCallback();
     }
 
-    pause() { Tone.Transport.pause(); this.synth.releaseAll(); }
-    stop() { Tone.Transport.stop(); this.synth.releaseAll(); }
+    pause(pauseCallback) { 
+        this.synth.releaseAll(); 
+        Tone.Transport.pause(); 
+        
+        if (pauseCallback) pauseCallback();
+    }
+
+    stop(stopCallback) { 
+        this.synth.releaseAll(); 
+        Tone.Transport.stop(); 
+        
+        if (stopCallback) stopCallback();
+    }
 
     getPlaybackState() {
         return {
@@ -401,7 +416,8 @@ class ScoreHandler {
             }, ev.time);
         });
         Tone.Transport.schedule((time) => {
-            Tone.Transport.stop()
+            Tone.Transport.stop();
+            this.stopCallback();
         }, self.playback.duration + 0.1);
 
         //Tone.Transport.stop(self.playback.duration + 0.1);

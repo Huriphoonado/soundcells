@@ -27,7 +27,9 @@ import { addAlert } from "./dom_manip.js"
 
 // Variables
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
-const scoreHandler = new ScoreHandler();
+const scoreHandler = new ScoreHandler({
+    stopCallback: function() { updatePlayButtonUI("Play"); }
+});
 const synths = new Synths();
 
 const fileDownloader = new FileDownloader();
@@ -248,7 +250,8 @@ function globalKeyEvents(ev) {
 
     // Play / Pause
     if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.keyCode == 32)) {
-        scoreHandler.playPause();
+        document.getElementById("play").click();
+        //scoreHandler.playPause();
         event.preventDefault();
         return true;
     }
@@ -267,7 +270,7 @@ function globalKeyEvents(ev) {
 
     // Stop
     if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "." || ev.key == ">")) {
-        scoreHandler.stop();
+        document.getElementById("stop").click();
         event.preventDefault();
         return true;
     }
@@ -354,6 +357,21 @@ document.getElementById("showBraille").addEventListener("click", (e) => {
         state["asciiBraille"] : state["unicodeBraille"]) || "";
 });
 
+document.getElementById("play").addEventListener("click", (e) => {
+    scoreHandler.playPause(
+        function() { updatePlayButtonUI("Pause") },
+        function() { updatePlayButtonUI("Play") }
+    );    
+    //console.log(playState);
+});
+
+document.getElementById("stop").addEventListener("click", (e) => {
+    scoreHandler.stop(function() { updatePlayButtonUI("Play") });
+});
+
+function updatePlayButtonUI(value) {
+    document.getElementById("play").innerHTML=value;
+}
 
 async function postData(url = '', data = {}) {
   const response = await fetch(url, {
