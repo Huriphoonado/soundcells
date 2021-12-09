@@ -72,7 +72,7 @@ class FileDownloader {
 // Original implementation at below link was broken
 // https://github.com/opensheetmusicdisplay/opensheetmusicdisplay/issues/792
 // But it includes potentially some useful information about paper
-function createPdf(osmd) {
+async function createPdf(osmd) {
     if (!osmd.drawer) {console.log("no score yet."); return false;}
     const backends = osmd.drawer.Backends;
     let svgElement = backends[0].getSvgElement();
@@ -90,14 +90,13 @@ function createPdf(osmd) {
     });
     const scale = pageWidth / svgElement.clientWidth;
 
-    const svgPromises = backends.map((b, i) => {
+    for (let i = 0; i < backends.length; i++) {
         if (i > 0) pdf.addPage();
+        let svgPage = backends[i].getSvgElement();
 
-        let svgPage = b.getSvgElement();
-
-        // Fixes broken Tempo text node
-        // This changes the font family and uses pixels for font size
-        // May need more testing if other text breaks in PDF output!
+        //     // Fixes broken Tempo text node
+        //     // This changes the font family and uses pixels for font size
+        //     // May need more testing if other text breaks in PDF output!
         svgPage.childNodes.forEach((nd, i) => {
             if (nd.tagName == 'text') {
                 nd.setAttribute("font-family", "Times New Roman");
@@ -106,15 +105,14 @@ function createPdf(osmd) {
             };
         });
 
-        return pdf.svg(svgPage, {
-            width: pageWidth,
+        await pdf.svg(svgPage, {
+            width: svgPage.clientWidth * scale,
             height: svgPage.clientHeight * scale,
             x: 0,
             y: 0
         });
-    });
-
-    return Promise.all(svgPromises).then(() => { return pdf; });
+    }
+    return pdf;
 }
 
 export { FileDownloader };

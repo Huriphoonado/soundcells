@@ -100,16 +100,17 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   backend: "svg",
   drawTitle: true,
   drawSubtitle: false,
-  drawPartNames: false
+  drawPartNames: false,
+  pageFormat: 'A4 P'
 });
 
 // X: 1
 // T: Sketch
-// L:1/8 
-// M:4/4 
-// K:Bbmaj 
+// L:1/8
+// M:4/4
+// K:Bbmaj
 // Q:1/4=128
-// G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d | 
+// G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d |
 // G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d |]
 
 let state = {
@@ -371,7 +372,7 @@ document.getElementById("score-zoom").addEventListener('dblclick', (e) => {
 });
 
 // document.getElementById('braille').innerHTML = (
-//     document.getElementById('asciiCheck').checked ? 
+//     document.getElementById('asciiCheck').checked ?
 //     data.asciiBraille : data.braille) || "";
 document.getElementById("showBraille").addEventListener("click", (e) => {
     //if state is empty sendABC
@@ -379,7 +380,7 @@ document.getElementById("showBraille").addEventListener("click", (e) => {
     //     sendABC(starterABC);
     // }
     document.getElementById('braille').innerHTML = (
-        document.getElementById('asciiCheck').checked ? 
+        document.getElementById('asciiCheck').checked ?
         state["asciiBraille"] : state["unicodeBraille"]) || "";
 });
 
