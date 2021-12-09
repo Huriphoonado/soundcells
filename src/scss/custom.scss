@@ -1,4 +1,51 @@
+@import url(https://fonts.googleapis.com/css?family=Muli:200,300,400,700);
+$headings-font-family: "futura";
+
+
+// $primary:#7F0FFF;
+// $secondary:#bed6d5;
+// $success:#420084;
+// $danger:#f2460d;
+// $info:#7ebcfa;
+// $warning:#ff9933;
+$light:#eef0f2;
+$dark:#000633;
+$navbar-dark-color:#1A5834;
+
 // Customize - https://getbootstrap.com/docs/5.0/customize/sass/
+$primary: #008738;
+$secondary: #dee4e1;
+// $success: #3e8d63;
+// $info: #7854e4;
+// $warning: #b8c924;
+// $danger: black;
+$light: #f8f9fa;
+$dark: black;
+
+// //custom color to be mapped
+// $accent : #da6d25;
+
+// // this is used to map colors. change accordingly.
+// $theme-colors: (
+//   primary: $primary,
+//   secondary: $secondary,
+//   success: $success,
+//   info: $info,
+//   warning: $warning,
+//   danger: $danger,
+//   light: $light,
+//   dark: $dark,
+// // add any additional color below
+//   accent: $accent,
+// // now bg-accent,btn-accent,etc.. can be called
+// );
+
+// // $primary is the sub-text color
+// $primary: #0000e0;
+// // $body-color: is Nav fond color and Header font color
+// $body-color: #0000e0;
+// // $body-bg: is background color of everything E
+// $body-bg: white;
 
 @import "../../node_modules/bootstrap/scss/bootstrap";
 @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css");
@@ -19,7 +66,85 @@ $utilities: map-merge(
   )
 );
 
-// Codepen
-.cm-editor * {
-    font-size: 18px ;
+// .navbar {
+//   opacity: 95%;
+// }
+
+// "soundcells" logo at the top
+#logo {
+  color: white;
+  font-size: 36px;
 }
+
+
+// title of divs
+h5, h2, button {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+// text inside divs
+#side_bar {
+  font-family: Verdana;
+  color: #1A5834;
+  font-weight: lighter;
+  font-size: 16px;
+}
+
+.btn .btn-primary {
+  height: 30px;
+  justify-content: center;
+  font-family: Verdana; 
+}
+
+
+.row {
+  font-size: 12px;
+  color: black;
+  font-family: Verdana; 
+  font-weight: bold;
+}
+
+footer {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+
+
+// text for sketch
+// osmd.EngravingRules.DefaultFontFamily = "Times New Roman";
+// #score {
+//   font-family: Verdana;
+//   color: #1A5834;
+//   background: #ECEEEA;
+//   outline: 8px outset #cecece; 
+//   border-radius: 12px; 
+//   margin: 32px; 
+//   padding: 25px 10px 10px 10px; 
+//   outline-offset: 0.5rem;
+// }
+
+
+
+
+// // overall text editor
+// #editor {
+//   font-family: Veranda;
+//   color: #1A5834;
+//   background: #ECEEEA;
+//   // border: 8px outset  #1A5834; 
+//   outline: 8px outset #cecece; 
+//   border-radius: 12px; 
+//   margin: 32px; padding: 25px 10px 10px 10px; 
+//   outline-offset: 0.5rem;
+// }
+
+// // inside text editor
+// .cm-editor * {
+//     font-size: 28px;
+//     color: black;
+//     font-family: Verdana; 
+//     line-height: 50px;
+//     font-weight: lighter;
+// }
