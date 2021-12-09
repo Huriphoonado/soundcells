@@ -26,9 +26,13 @@ import { addAlert } from "./dom_manip.js"
 // import { Midi } from '@tonejs/midi';
 
 // Variables
+let play = '<i class="bi bi-play-fill" aria-label="play"></i>';
+
+let pause = '<i class="bi bi-pause-fill" aria-label="pause"></i>';
+
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
 const scoreHandler = new ScoreHandler({
-    stopCallback: function() { updatePlayButtonUI("Play"); }
+    stopCallback: function() { updatePlayButtonUI(play); }
 });
 const synths = new Synths();
 
@@ -379,16 +383,17 @@ document.getElementById("showBraille").addEventListener("click", (e) => {
         state["asciiBraille"] : state["unicodeBraille"]) || "";
 });
 
+
 document.getElementById("play").addEventListener("click", (e) => {
     scoreHandler.playPause(
-        function() { updatePlayButtonUI("Pause") },
-        function() { updatePlayButtonUI("Play") }
+        function() { updatePlayButtonUI(pause) },
+        function() { updatePlayButtonUI(play) }
     );    
     //console.log(playState);
 });
 
 document.getElementById("stop").addEventListener("click", (e) => {
-    scoreHandler.stop(function() { updatePlayButtonUI("Play") });
+    scoreHandler.stop(function() { updatePlayButtonUI(play) });
 });
 
 function updatePlayButtonUI(value) {
