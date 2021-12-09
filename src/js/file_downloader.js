@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
 
 import { addAlert } from './dom_manip'
+import { state } from "./index";
 
 class FileDownloader {
     constructor() {
@@ -76,9 +77,12 @@ async function createPdf(osmd) {
     if (!osmd.drawer) {console.log("no score yet."); return false;}
     const backends = osmd.drawer.Backends;
     let svgElement = backends[0].getSvgElement();
-
-    let pageWidth = 216; // 210
-    let pageHeight = 280; // 297
+    state.orientation = (document.getElementById('orientationCheck').checked) ? "P" : "L"
+    state.pageFormat = (document.getElementById('paperSizeCheck').checked) ? "A4" : "A3"
+    let pageFormat = `${state.pageFormat} ${state.orientation}`;
+    
+    let pageWidth = pageFormat === "A4 P" ? 210 : pageFormat === "A4 L" ? 297 : pageFormat === "A3 P" ? 297 : 420; 
+    let pageHeight = pageFormat === "A4 P" ? 297 : pageFormat === "A4 L" ? 210 : pageFormat === "A3 P" ? 420 : 297; 
 
     const orientation = pageHeight > pageWidth ? "portrait" : "landscape";
     // create a new jsPDF instance
