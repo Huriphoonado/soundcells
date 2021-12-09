@@ -15,6 +15,8 @@ $ . venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
+For Windows replace . venv/bin/activate with . venv/Scripts/activate
+
 ### Web
 To install web dependencies, use npm.
 
@@ -29,6 +31,8 @@ To run the Flask app locally in development/debug mode:
 $ export FLASK_ENV=development
 $ python -m flask run
 ```
+
+For Windows replace export FLASK_ENV=development with $env:FLASK_ENV = "development" 
 
 This app uses [webpack](https://webpack.js.org) to bundle and output js code. First, ensure that we are in development mode by updating the mode in webpack.config.js.
 
