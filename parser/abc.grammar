@@ -44,20 +44,26 @@ pattern { SlurStart | SlurEnd | DottedRhythm | event | event Barline | SlurEnd B
 
 DottedRhythm { event !dotted Dot event }
 
-event { Note | Rest | Chord }
+event { ( ShorthandDecoration? Gracenote? Note) | Rest | (Gracenote? Chord) }
 
 Chord { "[" Note+ "]" }
 Note {Accidental? Pitch (Duration? Octave? | Octave? Duration?) }
-
+Gracenote { '{' Note+ '}'}
 Rest { 'z' Duration?}
+
+ShorthandDecoration { Staccato | IrishRoll | Fermata | Accent | LowerMordent | Coda | UpperMordent | Segno | Trill | Up-Bow | Down-Bow }
+
 
 Barline {
     '|'  |
     '||' |
     ':|' |
     '|:' |
+    '[|' |
     '|]' |
-    ':||:'
+    ':||:' |
+    ':|:' |
+    '::' 
 }
 
 @tokens {
@@ -69,8 +75,10 @@ Barline {
     Comment { '%' ![\n\r]* }
 
     int { '0' | $[1-9] std.digit* }
-    frac {$[1-9] std.digit* whitespace* '/' whitespace* $[1-9] std.digit* }
-    number { int | frac }
+    frac {$[1-9] std.digit* whitespace* '/' whitespace*  $[1-9] std.digit* }
+    durationfrac { frac | ('/'+ | ('/' int))}
+    number { int | frac}
+    durationnumber { int | durationfrac}
     @precedence {frac, int}
 
     pitchLetter { $[abcdefgABCDEFG] }
@@ -79,9 +87,21 @@ Barline {
     Pitch { pitchLetter }
     Accidental { '_'+ | '=' | '^'+ }
     Octave { $[,']+ }
-    Duration { number }
+    Duration { durationnumber }
     Dot { '<'+ | '>'+ }
 
+    Staccato { '.' }
+    IrishRoll { '~' }
+    Fermata { 'H' }
+    Accent { 'L' }
+    LowerMordent { 'M' }
+    Coda { 'O' }
+    UpperMordent { 'P' }
+    Segno { 'S' }
+    Trill { 'T' }
+    Up-Bow { 'u' }
+    Down-Bow { 'v' }
+    
     SlurStart { '(' }
     SlurEnd { ')' }
 

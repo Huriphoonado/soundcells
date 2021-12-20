@@ -109,34 +109,15 @@ const visualScore = new osmd.OpenSheetMusicDisplay("score", {
   drawTitle: true,
   drawSubtitle: false,
   drawPartNames: false,
-  pageFormat: 'A4 P'
+  pageFormat: 'Endless'
 });
-
-const fileScore = new osmd.OpenSheetMusicDisplay("fileScore", {
-    autoResize: false,
-    backend: "svg",
-    drawTitle: true,
-    drawSubtitle: false,
-    drawPartNames: false,
-    pageFormat: `${state.pageFormat} ${state.orientation}`
-});
-
-// X: 1
-// T: Sketch
-// L:1/8
-// M:4/4
-// K:Bb
-// Q:1/4=128
-// G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d |
-// G G F F C z1/2 F1/2, B c | B z1/2 B z1/2 F F z1/2 F z1/2 E, | G2 G2 E E G B | G z1/2 G z1/2 G e d e .d |]
-
 
 // Set up file downloader
 document.getElementById('downloadButton').onclick = function() {
     fileDownloader.setTitle(scoreHandler.getTitle());
     fileDownloader.download();
 }
-fileDownloader.score = fileScore;
+fileDownloader.score = visualScore;
 fileDownloader.notifications = document.getElementById("saveNotifications");
 fileDownloader.attachHTML('abc', document.getElementById('abcCheck'));
 fileDownloader.attachHTML('brf', document.getElementById('brailleMusicCheck'));
@@ -361,15 +342,7 @@ const sendABC = (abcCode) => {
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
-            .then( v => {
-                visualScore.render();
-                console.log(osmd);
-            } )
-            fileScore.load(data.musicxml)
-            .then( v => {
-                fileScore.render();
-                console.log(osmd);
-            } )
+            .then( v => { visualScore.render(); } )
         }
     })
 }
@@ -399,7 +372,7 @@ document.getElementById("play").addEventListener("click", (e) => {
     scoreHandler.playPause(
         function() { updatePlayButtonUI(pause) },
         function() { updatePlayButtonUI(play) }
-    );    
+    );
     //console.log(playState);
 });
 
@@ -499,4 +472,3 @@ abcScoreExamples.forEach(ex => {
 // A little hacky?? - This sets up the internal data structure before any input
 //  Maybe store musicxml/braille defaults
 scoreHandler.generateScoreStructure(view.state.tree.cursor(), view.state)
-

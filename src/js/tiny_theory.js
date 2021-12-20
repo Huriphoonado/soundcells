@@ -65,7 +65,7 @@ let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}, tone) {
 
     // Calculate duration values
     let [mNum, mDenum] = md.M.replace(/\s/g, "").split('/');
-    let tick = eval(`${node.duration} * ${md.L} * ${mDenum}`);
+    let tick = eval(`${extractDur(node.duration)} * ${md.L} * ${mDenum}`);
 
     // Deal with dotted durations
     if ((node.preText != undefined) && (node.postText != undefined)) {
@@ -96,6 +96,17 @@ let abcToScientific = function(node, md={K:'c', L:'1/4', M:'4/4'}, tone) {
     else if (node.name == 'Note') scientificNotation['note'] = calculatePitchNotation(node, md);
 
     return scientificNotation;
+}
+
+// if first character != '/' return
+// if length == 1 return 1/2
+// if second character == '/' return '1/' + 2**dur.length
+// else return '1'+dur
+let extractDur = function(dur) {
+    if (dur[0] != '/') return dur; // 1, 1/2, 2/6
+    if (dur.length == 1) return '1/2'; //  /
+    if (dur[1] == '/') return '1/' + 2**dur.length; // //
+    return '1'+ dur; // /2 /4
 }
 
 // Naive approach that filters out fractions and integers and checks their order

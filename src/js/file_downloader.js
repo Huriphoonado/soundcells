@@ -70,19 +70,26 @@ class FileDownloader {
     }
 }
 
-// Original implementation at below link was broken
+// Some original source code
 // https://github.com/opensheetmusicdisplay/opensheetmusicdisplay/issues/792
-// But it includes potentially some useful information about paper
-async function createPdf(osmd) {
-    if (!osmd.drawer) {console.log("no score yet."); return false;}
-    const backends = osmd.drawer.Backends;
-    let svgElement = backends[0].getSvgElement();
-    state.orientation = (document.getElementById('orientationCheck').checked) ? "P" : "L"
-    state.pageFormat = (document.getElementById('paperSizeCheck').checked) ? "A4" : "A3"
+// 1. Resize the svg to a standard (not based on browser window)
+// 2. Set page layout settings
+// 3. Create PDF - for each page add the svg
+// 4. Change the svg back to responsive web mode
+async function createPdf(score) {
+    if (!score.drawer) {console.log("no score yet."); return false;}
+
+    state.orientation = (document.getElementById('orientationCheck').checked) ? "P" : "L";
+    state.pageFormat = (document.getElementById('paperSizeCheck').checked) ? "A4" : "A3";
     let pageFormat = `${state.pageFormat} ${state.orientation}`;
-    
-    let pageWidth = pageFormat === "A4 P" ? 210 : pageFormat === "A4 L" ? 297 : pageFormat === "A3 P" ? 297 : 420; 
-    let pageHeight = pageFormat === "A4 P" ? 297 : pageFormat === "A4 L" ? 210 : pageFormat === "A3 P" ? 420 : 297; 
+
+    standardSVGSize(score, pageFormat, state.orientation);
+
+    const backends = score.drawer.Backends;
+    let svgElement = backends[0].getSvgElement();
+
+    let pageWidth = pageFormat === "A4 P" ? 210 : pageFormat === "A4 L" ? 297 : pageFormat === "A3 P" ? 297 : 420;
+    let pageHeight = pageFormat === "A4 P" ? 297 : pageFormat === "A4 L" ? 210 : pageFormat === "A3 P" ? 420 : 297;
 
     const orientation = pageHeight > pageWidth ? "portrait" : "landscape";
     // create a new jsPDF instance
@@ -98,9 +105,9 @@ async function createPdf(osmd) {
         if (i > 0) pdf.addPage();
         let svgPage = backends[i].getSvgElement();
 
-        //     // Fixes broken Tempo text node
-        //     // This changes the font family and uses pixels for font size
-        //     // May need more testing if other text breaks in PDF output!
+        // Fixes broken Tempo text node
+        // This changes the font family and uses pixels for font size
+        // May need more testing if other text breaks in PDF output!
         svgPage.childNodes.forEach((nd, i) => {
             if (nd.tagName == 'text') {
                 nd.setAttribute("font-family", "Times New Roman");
@@ -116,7 +123,27 @@ async function createPdf(osmd) {
             y: 0
         });
     }
+
+    responsiveSVGSize(score);
     return pdf;
+}
+
+// Prepares an svg for printing
+function standardSVGSize(score, pageFormat, orientation) {
+    let sz = `${1200 * (orientation == 'L' ? 1.41 : 1)}px`
+
+    score.autoResize = false;
+    score.setPageFormat(pageFormat);
+    document.getElementById('score').style.minWidth = sz;
+    score.render();
+}
+
+// Returns the svg to responsive web layout
+function responsiveSVGSize(score) {
+    score.autoResize = true;
+    score.setPageFormat("Endless");
+    document.getElementById('score').style.minWidth = null;
+    score.render();
 }
 
 export { FileDownloader };
