@@ -19,21 +19,21 @@
                     {% include 'example_abc.html' %}
                 </div>
             </aside>
-            <main id="main" class="order-1 col-sm-6 col-md-9">
+            <main id="main" class="order-1 col-sm-6 col-md-9 pe-5">
                 <h1>ABC Text Editor</h1>
-                <div class="row py-1">
+                <div class="row pb-1">
                     <div id="editor"></div>
                 </div>
-                <div class="row" id="belowEditor">
+                <div class="row pb-1 clearfix" id="belowEditor">
                     <div class="col-sm">
-                        <button id="showBraille" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#brailleView">Show Braille Music</button>
+                        <button id="showBraille" type="button" class="btn btn-primary float-start" data-bs-toggle="modal" data-bs-target="#brailleView">Show Braille Music</button>
                     </div>
-                    <div class="col-sm-6" id="editorNotify"></div>
-                    <div class="col-sm">
+                    <div class="col-auto">
                         <p class="text-end" id="info"></p>
                     </div>
+
                 </div>
-                <div class="row">
+                <div class="row pb-4">
                     <div class="col-sm">
                         <button id="play" type="button" class = "btn btn-primary btn-sm">
                             <i class="bi bi-play-fill" aria-label="play"></i>
@@ -41,10 +41,10 @@
                         <button id="stop" type="button" class = "btn btn-primary btn-sm">
                             <i class="bi bi-stop-fill" aria-label="stop"></i>
                     </div>
+                    <div class="col-auto" id="editorNotify"></div>
                 </div>
-                <div class="row">
-                    <div id="score"></div>
-                    <div style="top: 0; left:0; max-width:1200px; min-width:1200px; width: 1200px; position: absolute; visibility: hidden;" id="fileScore"></div>
+                <div class="row pb-4">
+                    <div id="score" class="bg-light card"></div>
                 </div>
             </main>
         </div>

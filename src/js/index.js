@@ -15,6 +15,7 @@ import {linter, lintKeymap} from "@codemirror/lint"
 
 import * as osmd from "opensheetmusicdisplay"
 
+import { oneDark } from "./editor_theme.js"
 import { ABC } from "./abc_language.js"
 
 import { ScoreHandler } from "./score_handler.js";
@@ -54,7 +55,8 @@ let startState = EditorState.create({
         highlightActiveLine(),
         highlightSpecialChars(),
         drawSelection(),
-        defaultHighlightStyle.fallback,
+        oneDark,
+        //defaultHighlightStyle.fallback,
         bracketMatching(),
         closeBrackets(),
         keymap.of([ // Default key commands
@@ -66,6 +68,7 @@ let startState = EditorState.create({
         //question(),
         readMeasure(scoreHandler),
         readNote(scoreHandler),
+        textFontSize(),
         ABC(), // Parser
         linter(lintMusic),
         EditorView.updateListener.of((v) => { // Main Event Handler
@@ -301,6 +304,34 @@ document.onkeydown = globalKeyEvents;
 
 // Information Commands
 
+function textFontSize() {
+  return keymap.of([{
+    key: "c-=",
+    preventDefault: true,
+    run() {
+        let fSel = document.getElementById('fontSizeSelect');
+        if (fSel.selectedIndex != fSel.options.length - 1) {
+            fSel.selectedIndex += 1;
+            view.dom.style.fontSize = `${fSel.value}px`;
+        };
+        return true;
+        }
+    },
+    {
+      key: "c--",
+      preventDefault: true,
+      run() {
+          let fSel = document.getElementById('fontSizeSelect');
+          if (fSel.selectedIndex != 0) {
+              fSel.selectedIndex -= 1;
+              view.dom.style.fontSize = `${fSel.value}px`;
+          };
+          return true;
+          }
+      }
+])
+}
+
 function readMeasure(scoreHandler) {
   return keymap.of([{
     key: "? m",
@@ -347,6 +378,31 @@ const sendABC = (abcCode) => {
     })
 }
 
+async function postData(url = '', data = {}) {
+  const response = await fetch(url, {
+    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+    mode: 'same-origin', // no-cors, *cors, same-origin
+    cache: 'default', // *default, no-cache, reload, force-cache, only-if-cached
+    credentials: 'same-origin', // include, *same-origin, omit
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    redirect: 'follow', // manual, *follow, error
+    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    body: JSON.stringify(data) // body data type must match "Content-Type" header
+  });
+  return response.json(); // parses JSON response into native JavaScript objects
+}
+
+// UI Functionality Setup
+
+// Change editor font size
+// Annoying bug - the gutter doesn't update its spacing until the user focuses
+document.getElementById("fontSizeSelect").addEventListener("change", (e) => {
+    view.dom.style.fontSize = `${e.target.value}px`;
+    console.log(view);
+});
+
 document.getElementById("score-zoom").addEventListener("input", (e) => {
     let zoomValue = parseInt(document.getElementById('score-zoom').value);
     visualScore.zoom = zoomValue > 50 ? Math.pow(zoomValue / 50, 2) : zoomValue / 50;
@@ -363,7 +419,7 @@ document.getElementById("score-zoom").addEventListener('dblclick', (e) => {
 
 document.getElementById("showBraille").addEventListener("click", (e) => {
     document.getElementById('braille').innerHTML = (
-        document.getElementById('asciiCheck').checked ?
+        document.getElementById('brailleText1').checked ?
         state["asciiBraille"] : state["unicodeBraille"]) || "";
 });
 
@@ -373,7 +429,6 @@ document.getElementById("play").addEventListener("click", (e) => {
         function() { updatePlayButtonUI(pause) },
         function() { updatePlayButtonUI(play) }
     );
-    //console.log(playState);
 });
 
 document.getElementById("stop").addEventListener("click", (e) => {
@@ -384,21 +439,7 @@ function updatePlayButtonUI(value) {
     document.getElementById("play").innerHTML=value;
 }
 
-async function postData(url = '', data = {}) {
-  const response = await fetch(url, {
-    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-    mode: 'same-origin', // no-cors, *cors, same-origin
-    cache: 'default', // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: 'same-origin', // include, *same-origin, omit
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    redirect: 'follow', // manual, *follow, error
-    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: JSON.stringify(data) // body data type must match "Content-Type" header
-  });
-  return response.json(); // parses JSON response into native JavaScript objects
-}
+
 
 // Insert Excerpt Functions
 let examplesDiv = document.getElementById("insertExamples");

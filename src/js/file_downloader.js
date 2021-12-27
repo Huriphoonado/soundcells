@@ -79,8 +79,8 @@ class FileDownloader {
 async function createPdf(score) {
     if (!score.drawer) {console.log("no score yet."); return false;}
 
-    state.orientation = (document.getElementById('orientationCheck').checked) ? "P" : "L";
-    state.pageFormat = (document.getElementById('paperSizeCheck').checked) ? "A4" : "A3";
+    state.orientation = (document.getElementById('paperOrient1').checked) ? "P" : "L";
+    state.pageFormat = (document.getElementById('paperSize1').checked) ? "A4" : "A3";
     let pageFormat = `${state.pageFormat} ${state.orientation}`;
 
     standardSVGSize(score, pageFormat, state.orientation);

@@ -5,33 +5,71 @@
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <!-- <p>Select the files you would like and then press download. </p> -->
         <form>
-            <h6 class="offcanvas-title">Score Settings</h6>
-            <div class="form-check form-switch">
-                <label style="margin-left: -37px; float:left; width: 47%;" class="form-check-label" for="asciiCheck">Unicode Braille</label>
-                <input style="float:left;" class="form-check-input" type="checkbox" id="asciiCheck" checked>
-                <label style="float:left; width: 40%;" class="form-check-label" for="asciiCheck">ASCii Braille</label>
+            <h5 class="offcanvas-title">ABC Editor</h5>
+            <div class="py-2">
+            <h6 class="offcanvas-title">Font Size</h6>
+                <select id="fontSizeSelect" class="form-select" aria-label="Editor Font Size">
+                    <option value="10">10</option>
+                    <option value="12">12</option>
+                    <option selected value="14">14</option>
+                    <option value="18">18</option>
+                    <option value="24">24</option>
+                    <option value="36">36</option>
+                    <option value="48">48</option>
+                </select>
             </div>
-            <div class="form-check form-switch">
-                <label class="form-check-label" for="descending">Descending Chords</label>
-                <input class="form-check-input" type="checkbox" id="descending" checked>
+            <hr>
+            <h5 class="offcanvas-title">Braille Score</h5>
+            <div class="py-2">
+                <h6 class="offcanvas-title">Braille Encoding</h6>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="brailleTextOptions" id="brailleText1" value="ascii" checked>
+                    <label class="form-check-label" for="brailleText1">ASCii</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="brailleTextOptions" id="brailleText2" value="unicode">
+                    <label class="form-check-label" for="brailleText2">Unicode</label>
+                </div>
             </div>
-            <br />
+            <div class="py-2">
+                <h6 class="offcanvas-title">Chord Intervals</h6>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="chordIntervalsOptions" id="chordIntervals1" value="descending" checked>
+                    <label class="form-check-label" for="chordIntervals1">Descending</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="chordIntervalsOptions" id="chordIntervals2" value="ascending">
+                    <label class="form-check-label" for="chordIntervals2">Ascending</label>
+                </div>
+            </div>
+            <hr>
+            <h5 class="offcanvas-title">Print Score</h5>
             <div class="col-sm">
-                <label for="score-zoom" class="form-label">Score Zoom (double click to reset)</label>
+                <label for="score-zoom" class="form-label">Score Size (double click to reset)</label>
                 <input type="range" class="form-range" id="score-zoom" min="10" max="90" value="50" />
             </div>
-            <h6 class="offcanvas-title">Print Settings</h6>
-            <div class="form-check form-switch">
-                <label style="margin-left: -37px; float:left; width: 37%;" class="form-check-label" for="orientationCheck">Landscape</label>
-                <input style="float:left;" class="form-check-input" type="checkbox" id="orientationCheck" checked>
-                <label style="float:left; width: 40%;" class="form-check-label" for="orientationCheck">Portrait</label>
+            <div class="py-2">
+                <h6 class="offcanvas-title">Paper Orientation</h6>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paperOrientOptions" id="paperOrient1" value="portrait" checked>
+                    <label class="form-check-label" for="paperOrient1">Portrait</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paperOrientOptions" id="paperOrient2" value="landscape">
+                    <label class="form-check-label" for="paperOrient2">Landscape</label>
+                </div>
             </div>
-            <div class="form-check form-switch">
-                <label style="margin-left: -37px; float:left; width: 20%;" class="form-check-label" for="paperSizeCheck">A3</label>
-                <input style="float:left;" class="form-check-input" type="checkbox" id="paperSizeCheck" checked>
-                <label style="float:left; width: 40%;" class="form-check-label" for="paperSizeCheck">A4</label>
+            <div class="py-2">
+                <h6 class="offcanvas-title">Paper Size</h6>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paperSizeOptions" id="paperSize1" value="a4" checked>
+                    <label class="form-check-label" for="paperSize1">A4</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paperSizeOptions" id="paperSize2" value="a3">
+                    <label class="form-check-label" for="paperSize2">A3</label>
+                </div>
             </div>
         </form>
     </div>

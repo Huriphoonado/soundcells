@@ -22,7 +22,7 @@
     "webpack-cli": "^4.7.2"
   },
   "dependencies": {
-    "@codemirror/basic-setup": "^0.19.0",
+    "@codemirror/basic-setup": "^0.19.1",
     "@popperjs/core": "^2.9.2",
     "@tonejs/midi": "^2.0.27",
     "bootstrap": "^5.0.2",
