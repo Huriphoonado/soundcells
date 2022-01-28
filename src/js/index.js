@@ -15,7 +15,7 @@ import {linter, lintKeymap} from "@codemirror/lint"
 
 import * as osmd from "opensheetmusicdisplay"
 
-import { oneDark } from "./editor_theme.js"
+import { scLightGreen } from "./editor_theme.js"
 import { ABC } from "./abc_language.js"
 
 import { ScoreHandler } from "./score_handler.js";
@@ -28,7 +28,6 @@ import { addAlert } from "./dom_manip.js"
 
 // Variables
 let play = '<i class="bi bi-play-fill" aria-label="play"></i>';
-
 let pause = '<i class="bi bi-pause-fill" aria-label="pause"></i>';
 
 const starterABC = 'X: 1\nT: Sketch\nK: C\nL: 1/4\nM: 4/4\n| A B c d |]';
@@ -55,7 +54,7 @@ let startState = EditorState.create({
         highlightActiveLine(),
         highlightSpecialChars(),
         drawSelection(),
-        oneDark,
+        scLightGreen,
         //defaultHighlightStyle.fallback,
         bracketMatching(),
         closeBrackets(),
@@ -66,8 +65,7 @@ let startState = EditorState.create({
             ...lintKeymap
         ]),
         //question(),
-        readMeasure(scoreHandler),
-        readNote(scoreHandler),
+        readInfo(scoreHandler),
         textFontSize(),
         ABC(), // Parser
         linter(lintMusic),
@@ -302,63 +300,58 @@ document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(t => {
 
 document.onkeydown = globalKeyEvents;
 
-// Information Commands
-
 function textFontSize() {
-  return keymap.of([{
-    key: "c-=",
-    preventDefault: true,
-    run() {
-        let fSel = document.getElementById('fontSizeSelect');
-        if (fSel.selectedIndex != fSel.options.length - 1) {
-            fSel.selectedIndex += 1;
-            view.dom.style.fontSize = `${fSel.value}px`;
-        };
-        return true;
+    return keymap.of([{
+        key: "c-=",
+        preventDefault: true,
+        run() {
+            let fSel = document.getElementById('fontSizeSelect');
+            if (fSel.selectedIndex != fSel.options.length - 1) {
+                fSel.selectedIndex += 1;
+                view.dom.style.fontSize = `${fSel.value}px`;
+            };
+            return true;
         }
     },
     {
-      key: "c--",
-      preventDefault: true,
-      run() {
-          let fSel = document.getElementById('fontSizeSelect');
-          if (fSel.selectedIndex != 0) {
-              fSel.selectedIndex -= 1;
-              view.dom.style.fontSize = `${fSel.value}px`;
-          };
-          return true;
-          }
-      }
-])
-}
-
-function readMeasure(scoreHandler) {
-  return keymap.of([{
-    key: "? m",
-    preventDefault: true,
-    run() {
-        let measureString = currentMeasureString(scoreHandler.getCurrentPosition()) || "No measure selected";
-        addAlert(measureString, {
-            location: document.getElementById('editorNotify'),
-        }); // srSpeak(measureString, "assertive");
-        return true;
+        key: "c--",
+        preventDefault: true,
+        run() {
+            let fSel = document.getElementById('fontSizeSelect');
+            if (fSel.selectedIndex != 0) {
+                fSel.selectedIndex -= 1;
+                view.dom.style.fontSize = `${fSel.value}px`;
+            };
+            return true;
+        }
     }
-  }])
-}
+])}
 
-function readNote(scoreHandler) {
-  return keymap.of([{
-    key: "? n",
-    run() {
-        let noteString = currentNoteString(scoreHandler.getCurrentPosition()) || "No note selected";
-        addAlert(noteString, {
-            location: document.getElementById('editorNotify'),
-        });
-        //srSpeak(noteString, "assertive");
-        return true;
+// Information Commands
+function readInfo(scoreHandler) {
+    return keymap.of([{
+        key: "? m", // Measure Info
+        preventDefault: true,
+        run() {
+            let measureString = currentMeasureString(scoreHandler.getCurrentPosition()) || "No measure selected";
+            addAlert(measureString, {
+                location: document.getElementById('editorNotify'),
+            }); // srSpeak(measureString, "assertive");
+            return true;
+        }
+    },
+    {
+        key: "? n", // Note Info
+        run() {
+            let noteString = currentNoteString(scoreHandler.getCurrentPosition()) || "No note selected";
+            addAlert(noteString, {
+                location: document.getElementById('editorNotify'),
+            });
+            //srSpeak(noteString, "assertive");
+            return true;
+        }
     }
-  }])
-}
+])}
 
 // GET/POST Functions
 const sendABC = (abcCode) => {
@@ -379,19 +372,19 @@ const sendABC = (abcCode) => {
 }
 
 async function postData(url = '', data = {}) {
-  const response = await fetch(url, {
-    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-    mode: 'same-origin', // no-cors, *cors, same-origin
-    cache: 'default', // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: 'same-origin', // include, *same-origin, omit
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    redirect: 'follow', // manual, *follow, error
-    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: JSON.stringify(data) // body data type must match "Content-Type" header
-  });
-  return response.json(); // parses JSON response into native JavaScript objects
+    const response = await fetch(url, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        mode: 'same-origin', // no-cors, *cors, same-origin
+        cache: 'default', // *default, no-cache, reload, force-cache, only-if-cached
+        credentials: 'same-origin', // include, *same-origin, omit
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body: JSON.stringify(data) // body data type must match "Content-Type" header
+    });
+    return response.json(); // parses JSON response into native JavaScript objects
 }
 
 // UI Functionality Setup

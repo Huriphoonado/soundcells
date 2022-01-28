@@ -47,13 +47,13 @@ const tooltipBackground = "#353a42";
 const selection = "#3E4451";
 const cursor = "#528bff";
 
-/// The editor theme styles for One Dark.
-export const oneDarkTheme = EditorView.theme({
+export const scLightGreenTheme = EditorView.theme({
   "&": {
     color: dark,
     backgroundColor: white,
     fontFamily: "M PLUS 1 Code",
-    //height: "300px"
+    minHeight: "150px",
+    maxHeight: "20vh"
   },
 
   ".cm-content": {
@@ -121,7 +121,7 @@ export const oneDarkTheme = EditorView.theme({
 }, {dark: false})
 
 /// The highlighting style for code in the One Dark theme.
-export const oneDarkHighlightStyle = HighlightStyle.define([
+export const scLightGreenHighlightStyle = HighlightStyle.define([
   {tag: t.keyword,
    color: rebeccaPurple},
   {tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
@@ -160,4 +160,4 @@ export const oneDarkHighlightStyle = HighlightStyle.define([
 
 /// Extension to enable the One Dark theme (both the editor theme and
 /// the highlight style).
-export const oneDark = [oneDarkTheme, oneDarkHighlightStyle]
+export const scLightGreen = [scLightGreenTheme, scLightGreenHighlightStyle]
