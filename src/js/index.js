@@ -21,6 +21,7 @@ import { ABC } from "./abc_language.js"
 import { ScoreHandler } from "./score_handler.js";
 import { Synths } from "./synths.js";
 import { FileDownloader } from "./file_downloader.js";
+import { Cacher } from "./cacher.js";
 
 import { addAlert } from "./dom_manip.js"
 
@@ -42,11 +43,11 @@ const specialKeyCommand = "s-Mod-";
 
 let timer; // Only send to flask server at a max interval
 
-// Editor 0.18.2
-// use parser syntaxTree
+const cacher = new Cacher();
+
 const abcThing = ABC();
 let startState = EditorState.create({
-    doc: starterABC,
+    doc: cacher.retrieveABCText() ? cacher.retrieveABCText() : starterABC,
     extensions: [
         lineNumbers(),
         history(),
@@ -101,6 +102,7 @@ export let state = {
     unicodeBraille: "⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁ ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠶⠼⠁⠃⠚⠀⠼⠙⠲⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠼⠁⠀⠐⠪⠺⠹⠱⠣⠅",
     asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
     musicXML: "",
+    zoomLevel: 1,
     errors: []
 }
 // Open Sheet Music Display
@@ -355,8 +357,10 @@ function readInfo(scoreHandler) {
 
 // GET/POST Functions
 const sendABC = (abcCode) => {
+
     fileDownloader.setContent('abc', abcCode);
-    console.log(fileDownloader)
+    cacher.saveABCText(view.state.doc.toString());
+
     postData('/data', { userdata: abcCode })
     .then(data => {
         state["unicodeBraille"] = data.braille;
@@ -366,7 +370,10 @@ const sendABC = (abcCode) => {
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
-            .then( v => { visualScore.render(); } )
+            .then( v => {
+                visualScore.zoom = state.zoomLevel; // zoom value not retained
+                visualScore.render();
+            } )
         }
     })
 }
@@ -397,14 +404,16 @@ document.getElementById("fontSizeSelect").addEventListener("change", (e) => {
 });
 
 document.getElementById("score-zoom").addEventListener("input", (e) => {
-    let zoomValue = parseInt(document.getElementById('score-zoom').value);
-    visualScore.zoom = zoomValue > 50 ? Math.pow(zoomValue / 50, 2) : zoomValue / 50;
+    let zoomSlide = parseInt(document.getElementById('score-zoom').value);
+    state.zoomLevel = zoomSlide > 50 ? Math.pow(zoomSlide / 50, 2) : zoomSlide / 50;
+    visualScore.zoom = state.zoomLevel;
     visualScore.render();
 });
 
 document.getElementById("score-zoom").addEventListener('dblclick', (e) => {
     document.getElementById('score-zoom').value = 50;
-    visualScore.zoom = 1;
+    state.zoomLevel = 1;
+    visualScore.zoom = state.zoomLevel;
     visualScore.render();
     e.stopPropagation();
 });
@@ -434,6 +443,7 @@ function updatePlayButtonUI(value) {
 
 
 
+// TODO - Move this code somewhere else
 // Insert Excerpt Functions
 let examplesDiv = document.getElementById("insertExamples");
 let abcScoreExamples = [
