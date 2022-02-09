@@ -102,7 +102,8 @@ export const scLightGreenTheme = EditorView.theme({
 
   ".cm-tooltip": {
     border: "none",
-    backgroundColor: tooltipBackground
+    backgroundColor: tooltipBackground,
+    color: white
   },
   ".cm-tooltip .cm-tooltip-arrow:before": {
     borderTopColor: "transparent",

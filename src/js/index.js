@@ -228,6 +228,11 @@ function globalKeyEvents(ev) {
     if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && (ev.key == "9" || ev.key == "(")) {
         event.preventDefault();
         if (view.hasFocus) {
+            // Update braille content
+            document.getElementById('braille').innerHTML = (
+                document.getElementById('brailleText1').checked ?
+                state["asciiBraille"] : state["unicodeBraille"]) || "";
+
             bootstrap.Modal.getOrCreateInstance(modals.braille).show();
             view.hadFocus = true;
         }
