@@ -339,27 +339,28 @@ class ScoreHandler {
 
 
     // Audio Playback functions
-    playNote() {
+    playNote(delayTime = 0) {
         if (!this.audioStarted) return this.startAudio().then(this.playNote());
         let evList = this.getCurrentPosition().events;
         if (evList.length == 0) return;
         let ev = evList[0]; // Could support higlighted group
 
-        console.log("ev is: ", ev);
-        if (ev.rawText == '?') {
-            this.synth.triggerAttackRelease("C4, 4n");
-        }
+        //console.log("ev is: ", ev);
+        // if (ev.rawText == '?') {
+        //     this.synth.triggerAttackRelease("C4, 4n");
+        // }
+        console.log(delayTime);
         if (ev.name == 'Note' || ev.name == 'Chord') {
             let note = ev.scientificNotation.note;
             let duration = ev.scientificNotation.seconds;
-            this.synth.triggerAttackRelease(note, duration);
+            this.synth.triggerAttackRelease(note, duration, Tone.now() + delayTime / 1000);
         }
     }
 
     playPause(playCallback, pauseCallback) {
         if (Tone.Transport.state == "started"){
             this.pause(pauseCallback);
-        } 
+        }
         else {
             if (Tone.Transport.loop) this.play(Tone.Transport.loopStart);
             else this.play(playCallback);
@@ -375,17 +376,17 @@ class ScoreHandler {
         if (playCallback) playCallback();
     }
 
-    pause(pauseCallback) { 
-        this.synth.releaseAll(); 
-        Tone.Transport.pause(); 
-        
+    pause(pauseCallback) {
+        this.synth.releaseAll();
+        Tone.Transport.pause();
+
         if (pauseCallback) pauseCallback();
     }
 
-    stop(stopCallback) { 
-        this.synth.releaseAll(); 
-        Tone.Transport.stop(); 
-        
+    stop(stopCallback) {
+        this.synth.releaseAll();
+        Tone.Transport.stop();
+
         if (stopCallback) stopCallback();
     }
 

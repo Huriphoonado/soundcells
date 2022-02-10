@@ -208,16 +208,22 @@ function currentNoteString(currentPosition) {
 // UI Sound
 const playNoteWhenTyped = function(scoreHandler, v) {
     let pbState = scoreHandler.getPlaybackState();
+    let notePlaybackCheck = document.getElementById("notePlaybackCheck").checked;
 
     // Don't play notes if piece is looping
-    if (pbState.state == 'started') return;
+    if (pbState.state == 'started' || !notePlaybackCheck) return;
+
+    // Determine whether the note should be delayed and ensure time is within 0–1000
+    let delayTime = document.getElementById('noteDelayTime').value;
+    if (isNaN(delayTime) || delayTime == undefined || !delayTime.length) delayTime = 0;
+    delayTime = Math.max(0, Math.min(parseInt(delayTime), 1000));
 
     // The very first character insertion has length 1
     if ((v.changes.inserted.length == 1 || v.changes.inserted.length == 2)) {
         let inserted = v.changes.inserted[v.changes.inserted.length - 1].text[0];
         if (inserted.length == 1 &&
         "abcdefgABCDEFG,'_^0123456789".split("").includes(inserted)) {
-            scoreHandler.playNote();
+            scoreHandler.playNote(delayTime);
         }
     }
 }
@@ -371,7 +377,7 @@ const sendABC = (abcCode) => {
         state["unicodeBraille"] = data.braille;
         state["asciiBraille"] = data.asciiBraille;
         // document.getElementById('braille').innerHTML = data.braille || "";
-        fileDownloader.setContent('brf', data.braille);
+        fileDownloader.setContent('brf', data.asciiBraille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
             visualScore.load(data.musicxml)
