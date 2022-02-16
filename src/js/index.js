@@ -103,16 +103,16 @@ export let state = {
     asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
     musicXML: "",
     zoomLevel: 1,
-    errors: []
+    errors: [],
 }
 // Open Sheet Music Display
 const visualScore = new osmd.OpenSheetMusicDisplay("score", {
-  autoResize: true,
-  backend: "svg",
-  drawTitle: true,
-  drawSubtitle: false,
-  drawPartNames: false,
-  pageFormat: 'Endless'
+    autoResize: true,
+    backend: "svg",
+    drawTitle: true,
+    drawSubtitle: false,
+    drawPartNames: false,
+    pageFormat: 'Endless'
 });
 
 // Set up file downloader
@@ -451,6 +451,15 @@ document.getElementById("stop").addEventListener("click", (e) => {
 function updatePlayButtonUI(value) {
     document.getElementById("play").innerHTML=value;
 }
+
+document.getElementById("surveyURL").addEventListener("click", (e) => {
+    let rootURL = 'https://docs.google.com/forms/d/e/1FAIpQLSdgySyLvpznkSJv-NmTwE4KO03vg7rY3U7GF1Q3hHRhadPXDg/viewform?usp=pp_url';
+    let prepop = '&entry.624111465='
+    let abcURL = `${encodeURIComponent(view.state.doc.toString())}`;
+    e.target.href = `${rootURL}${prepop}${abcURL}`
+
+    //scoreHandler.stop(function() { updatePlayButtonUI(play) });
+});
 
 
 
