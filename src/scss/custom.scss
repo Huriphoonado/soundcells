@@ -25,7 +25,12 @@ $warning: #EBA63F;
   font-size: 30px;
 }
 
-
+textarea {
+  min-height: 150px;
+  max-height: 20vh;
+  width: 100%;
+  resize: vertical;
+}
 
 // text for sketch
 // osmd.EngravingRules.DefaultFontFamily = "Times New Roman";

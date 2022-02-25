@@ -27,6 +27,43 @@ import { addAlert } from "./dom_manip.js"
 
 // import { Midi } from '@tonejs/midi';
 
+let textarea = document.getElementById("abctextarea");
+let codeEditorOption = document.getElementById("codeEditor");
+let textareaOption = document.getElementById("textEditor");
+codeEditorOption.addEventListener("change", (e) => {
+    document.getElementById("abctextarea").style.display = "none";    
+    document.getElementById("editor").style.display = "inline";
+})
+
+textareaOption.addEventListener("change", (e) => {
+    document.getElementById("editor").style.display = "none";    
+    let abctextarea = document.getElementById("abctextarea");
+    abctextarea.style.display = "inline";
+
+    let codeEditorText = "";
+    for(let line in view.state.doc.text){
+        codeEditorText += view.state.doc.text[line] + '\n';
+    }
+    abctextarea.value = codeEditorText.slice(0,-1);
+
+})
+
+textarea.addEventListener("input", (e) => { 
+    let lastCharAdded = e.target.value[e.target.selectionStart-1];
+    let lastCharIndex = view.state.doc.length;
+
+    view.dispatch({
+        changes: {from: 0, to: lastCharIndex, insert: e.target.value},
+        selection: {anchor: e.target.selectionStart},
+    });
+
+    if ("abcdefgABCDEFG,'_^0123456789".split("").includes(lastCharAdded)) {
+        scoreHandler.playNote(0);
+    }
+
+});
+
+
 // Variables
 let play = '<i class="bi bi-play-fill" aria-label="play"></i>';
 let pause = '<i class="bi bi-pause-fill" aria-label="pause"></i>';
@@ -207,11 +244,14 @@ function currentNoteString(currentPosition) {
 
 // UI Sound
 const playNoteWhenTyped = function(scoreHandler, v) {
+    console.log("v changes ", v.changes);
     let pbState = scoreHandler.getPlaybackState();
     let notePlaybackCheck = document.getElementById("notePlaybackCheck").checked;
+    let textareaCheck = document.getElementById("textEditor").checked;
 
     // Don't play notes if piece is looping
-    if (pbState.state == 'started' || !notePlaybackCheck) return;
+    if (pbState.state == 'started' || !notePlaybackCheck || textareaCheck ) return;
+    
 
     // Determine whether the note should be delayed and ensure time is within 0–1000
     let delayTime = document.getElementById('noteDelayTime').value;
@@ -226,6 +266,7 @@ const playNoteWhenTyped = function(scoreHandler, v) {
             scoreHandler.playNote(delayTime);
         }
     }
+
 }
 
 // Key Commands
@@ -512,13 +553,19 @@ abcScoreExamples.forEach(ex => {
     btn.classList.add("btn", "btn-outline-primary");
     btn.innerHTML = ex.buttonName;
     btn.onclick = function() {
-        let update = view.state.update({
-            changes: {
-                from: 0, to: view.state.doc.length,
-                insert: ex.abcScore
-            }
-        });
-        view.update([update]);
+        let textareaChecked = document.getElementById("textEditor").checked;
+        if(textareaChecked){
+            document.getElementById("abctextarea").value = ex.abcScore;
+        }
+        else{
+            let update = view.state.update({
+                changes: {
+                    from: 0, to: view.state.doc.length,
+                    insert: ex.abcScore
+                }
+            });
+            view.update([update]);
+        }
     }
     examplesDiv.appendChild(btn);
 });
