@@ -349,7 +349,6 @@ class ScoreHandler {
         // if (ev.rawText == '?') {
         //     this.synth.triggerAttackRelease("C4, 4n");
         // }
-        console.log(delayTime);
         if (ev.name == 'Note' || ev.name == 'Chord') {
             let note = ev.scientificNotation.note;
             let duration = ev.scientificNotation.seconds;

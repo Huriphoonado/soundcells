@@ -27,42 +27,6 @@ import { addAlert } from "./dom_manip.js"
 
 // import { Midi } from '@tonejs/midi';
 
-let textarea = document.getElementById("abctextarea");
-let codeEditorOption = document.getElementById("codeEditor");
-let textareaOption = document.getElementById("textEditor");
-codeEditorOption.addEventListener("change", (e) => {
-    document.getElementById("abctextarea").style.display = "none";    
-    document.getElementById("editor").style.display = "inline";
-})
-
-textareaOption.addEventListener("change", (e) => {
-    document.getElementById("editor").style.display = "none";    
-    let abctextarea = document.getElementById("abctextarea");
-    abctextarea.style.display = "inline";
-
-    let codeEditorText = "";
-    for(let line in view.state.doc.text){
-        codeEditorText += view.state.doc.text[line] + '\n';
-    }
-    abctextarea.value = codeEditorText.slice(0,-1);
-
-})
-
-textarea.addEventListener("input", (e) => { 
-    let lastCharAdded = e.target.value[e.target.selectionStart-1];
-    let lastCharIndex = view.state.doc.length;
-
-    view.dispatch({
-        changes: {from: 0, to: lastCharIndex, insert: e.target.value},
-        selection: {anchor: e.target.selectionStart},
-    });
-
-    if ("abcdefgABCDEFG,'_^0123456789".split("").includes(lastCharAdded)) {
-        scoreHandler.playNote(0);
-    }
-
-});
-
 
 // Variables
 let play = '<i class="bi bi-play-fill" aria-label="play"></i>';
@@ -81,6 +45,11 @@ const specialKeyCommand = "s-Mod-";
 let timer; // Only send to flask server at a max interval
 
 const cacher = new Cacher();
+
+let textarea = document.getElementById("abctextarea");
+let codeEditorOption = document.getElementById("codeEditor");
+let textareaOption = document.getElementById("textEditor");
+let textAreaPrevCharCount = 0; // Tell whether user added or deleted text
 
 const abcThing = ABC();
 let startState = EditorState.create({
@@ -244,14 +213,14 @@ function currentNoteString(currentPosition) {
 
 // UI Sound
 const playNoteWhenTyped = function(scoreHandler, v) {
-    console.log("v changes ", v.changes);
+    // console.log("v changes ", v.changes);
     let pbState = scoreHandler.getPlaybackState();
     let notePlaybackCheck = document.getElementById("notePlaybackCheck").checked;
     let textareaCheck = document.getElementById("textEditor").checked;
 
     // Don't play notes if piece is looping
     if (pbState.state == 'started' || !notePlaybackCheck || textareaCheck ) return;
-    
+
 
     // Determine whether the note should be delayed and ensure time is within 0–1000
     let delayTime = document.getElementById('noteDelayTime').value;
@@ -362,7 +331,7 @@ function textFontSize() {
             let fSel = document.getElementById('fontSizeSelect');
             if (fSel.selectedIndex != fSel.options.length - 1) {
                 fSel.selectedIndex += 1;
-                view.dom.style.fontSize = `${fSel.value}px`;
+                updateEditorFontSize(fSel.value);
             };
             return true;
         }
@@ -374,7 +343,7 @@ function textFontSize() {
             let fSel = document.getElementById('fontSizeSelect');
             if (fSel.selectedIndex != 0) {
                 fSel.selectedIndex -= 1;
-                view.dom.style.fontSize = `${fSel.value}px`;
+                updateEditorFontSize(fSel.value);
             };
             return true;
         }
@@ -451,8 +420,7 @@ async function postData(url = '', data = {}) {
 // Change editor font size
 // Annoying bug - the gutter doesn't update its spacing until the user focuses
 document.getElementById("fontSizeSelect").addEventListener("change", (e) => {
-    view.dom.style.fontSize = `${e.target.value}px`;
-    console.log(view);
+    updateEditorFontSize(e.target.value);
 });
 
 document.getElementById("score-zoom").addEventListener("input", (e) => {
@@ -502,6 +470,60 @@ document.getElementById("surveyURL").addEventListener("click", (e) => {
     //scoreHandler.stop(function() { updatePlayButtonUI(play) });
 });
 
+// Events for Generic HTML Text Area
+codeEditorOption.addEventListener("change", (e) => {
+    document.getElementById("abctextarea").style.display = "none";
+    document.getElementById("editor").style.display = "inline";
+})
+
+// Swap CodeMirror and default HTML text areas
+textareaOption.addEventListener("change", (e) => {
+    document.getElementById("editor").style.display = "none";
+    textarea.style.display = "inline";
+
+    let codeEditorText = "";
+    for(let line in view.state.doc.text){
+        codeEditorText += view.state.doc.text[line] + '\n';
+    }
+    textarea.value = codeEditorText.slice(0,-1);
+    textAreaPrevCharCount = textarea.value.length;
+
+})
+
+textarea.addEventListener("input", (e) => {
+    let lastCharAdded = e.target.value[e.target.selectionStart-1];
+    let lastCharIndex = view.state.doc.length;
+
+    view.dispatch({
+        changes: {from: 0, to: lastCharIndex, insert: e.target.value},
+        selection: {anchor: e.target.selectionStart},
+    });
+
+    if ("abcdefgABCDEFG,'_^0123456789".split("").includes(lastCharAdded) &&
+        textarea.value.length >= textAreaPrevCharCount) {
+        scoreHandler.playNote(0);
+    }
+
+    textAreaPrevCharCount = textarea.value.length;
+
+});
+
+// There is no universal support for "selection change" so we have to
+// manually capture arrow events for tracking cursor position
+textarea.addEventListener("keyup", (e) => {
+    if (e.keyCode >= 37 && e.keyCode <= 40) {
+        view.dispatch({ selection: {anchor: e.target.selectionStart} });
+    }
+});
+
+textarea.addEventListener("click", (e) => {
+    view.dispatch({ selection: {anchor: e.target.selectionStart} });
+});
+
+function updateEditorFontSize(sz) {
+    view.dom.style.fontSize = `${sz}px`;
+    textarea.style.fontSize = `${sz}px`;
+}
 
 
 // TODO - Move this code somewhere else
