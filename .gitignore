@@ -1,6 +1,8 @@
 # Mac
 .DS_Store
 
+
+
 # Node and JS stuff
 node_modules/
 
@@ -13,6 +15,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+static/
 .Python
 build/
 develop-eggs/
