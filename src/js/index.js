@@ -461,14 +461,23 @@ function updatePlayButtonUI(value) {
     document.getElementById("play").innerHTML=value;
 }
 
+// Google Form Submissions
 document.getElementById("surveyURL").addEventListener("click", (e) => {
     let rootURL = 'https://docs.google.com/forms/d/e/1FAIpQLSdgySyLvpznkSJv-NmTwE4KO03vg7rY3U7GF1Q3hHRhadPXDg/viewform?usp=pp_url';
     let prepop = '&entry.624111465='
     let abcURL = `${encodeURIComponent(view.state.doc.toString())}`;
-    e.target.href = `${rootURL}${prepop}${abcURL}`
-
-    //scoreHandler.stop(function() { updatePlayButtonUI(play) });
+    e.target.href = `${rootURL}${prepop}${abcURL}`.substring(0, 2040);
 });
+
+
+document.getElementById('submitButton').addEventListener("click", (e) => {
+    let rootURL = 'https://docs.google.com/forms/d/e/1FAIpQLScD9yq9QHW-ccKEkKUc0hdGycjUsYf7sE7XbhjoQEPt-NVX2w/viewform?usp=pp_url';
+    let prepop = '&entry.1348577600='
+    let abcURL = `${encodeURIComponent(view.state.doc.toString())}`;
+    let fullURL = `${rootURL}${prepop}${abcURL}`.substring(0, 2040);
+
+    window.open(fullURL, "_blank");
+})
 
 // Events for Generic HTML Text Area
 codeEditorOption.addEventListener("change", (e) => {
