@@ -33,7 +33,7 @@ const unitNoteLengths = ["1/1", "1/2", "1/4", "1/8", "1/16",
 // https://abcnotation.com/wiki/abc:standard:v2.2#information_fields
 const supportedHeaders = ['C', 'K', 'L', 'M', 'Q', 'T', 'X'];
 
-let getAccidentalByKey = function(pitch, key) {
+let getAccidentalByKey = function(pitch, key='c') {
     return (key in numFlats) ? (flatsList.slice(0, numFlats[key]).includes(pitch) * -1)
          : (key in numSharp) ? (sharpList.slice(0, numSharp[key]).includes(pitch) * 1)
          : 0
@@ -49,8 +49,9 @@ let calculatePitchNotation = function(node, md) {
         + (node.octave.split("'").length - 1);
 
     let ac;
+    let kToUse = node.accidental.length ? 'c' : md.K.toLowerCase();
     if (node.accidental == "=") ac = 0;
-    else ac = getAccidentalByKey(node.pitch.toLowerCase(), md.K.toLowerCase())
+    else ac = getAccidentalByKey(node.pitch.toLowerCase(), kToUse)
         - (node.accidental.split("_").length - 1)
         + (node.accidental.split("^").length - 1);
     let accidental = ['bb', 'b', '', '#', 'x'][Math.min(Math.max(ac, -2), 2) + 2];
