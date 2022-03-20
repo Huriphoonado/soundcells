@@ -64,7 +64,7 @@ let startState = EditorState.create({
         scLightGreen,
         //defaultHighlightStyle.fallback,
         bracketMatching(),
-        closeBrackets(),
+        // closeBrackets(), // not useful for ()
         keymap.of([ // Default key commands
             ...closeBracketsKeymap,
             ...defaultKeymap,
@@ -156,20 +156,25 @@ function lintMusic(view) {
     let rawErrorList = scoreHandler.getErrorList();
 
     rawErrorList.forEach(erNode => {
-        diagnostics.push({
+        let newDiag = {
             from: erNode.from,
             to: erNode.to,
             severity: erNode.severity, // info | warning | error
             message: erNode.message,
-            actions: [
+        }
+
+        // Errors are completely wrong syntax, so provide the ability to delete
+        if (erNode.severity == "error") {
+            newDiag.actions = [
                 {
-                    name: "fix",
+                    name: "delete",
                     apply(view, from, to) {
                         view.dispatch( { changes: {from, to, insert: ''} } );
                     }
                 }
-            ]
-        })
+            ];
+        }
+        diagnostics.push(newDiag);
     });
 
     console.log('lint', diagnostics);
@@ -218,7 +223,7 @@ const playNoteWhenTyped = function(scoreHandler, v) {
     let notePlaybackCheck = document.getElementById("notePlaybackCheck").checked;
     let textareaCheck = document.getElementById("textEditor").checked;
 
-    // Don't play notes if piece is looping
+    // Don't play notes if piece is looping, playback is disabled, or in a textarea
     if (pbState.state == 'started' || !notePlaybackCheck || textareaCheck ) return;
 
 
@@ -382,7 +387,20 @@ const sendABC = (abcCode) => {
     fileDownloader.setContent('abc', abcCode);
     cacher.saveABCText(view.state.doc.toString());
 
-    postData('/data', { userdata: abcCode })
+    // Fix for music21 not handling measure numbers for pickups
+    let hasPickup = true;
+    if (scoreHandler.scoreStructure[0].measures) {
+        console.log(scoreHandler.scoreStructure[0].measures[0])
+        hasPickup = !!scoreHandler.scoreStructure[0].measures[0].duration;
+    }
+
+    console.log();
+
+    postData('/data', {
+        // Temporary fix for music21 limited dynamic support
+        userdata: abcCode.replace(/!>/g, "!diminuendo").replace(/!</, "!crescendo"),
+        args: {hasPickup: hasPickup}
+    })
     .then(data => {
         state["unicodeBraille"] = data.braille;
         state["asciiBraille"] = data.asciiBraille;

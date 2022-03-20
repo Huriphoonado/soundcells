@@ -10,7 +10,7 @@ export const ABCLanguage = LRLanguage.define({
           Barline: t.bool,
           Comment: t.comment,
           "Metadata/...": t.keyword,
-          "ShorthandDecoration/...": t.operator,
+          "Decoration/...": t.operator,
           "( )": t.paren,
           "[ ]": t.squareBracket
       })

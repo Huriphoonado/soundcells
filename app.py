@@ -1,7 +1,7 @@
 from io import BytesIO
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from music21 import converter, braille, tempo, midi, musicxml, abcFormat, stream
+from music21 import converter, metadata, braille, tempo, midi, musicxml, abcFormat, stream
 
 app = Flask(__name__)
 CORS(app)
@@ -11,6 +11,7 @@ CORS(app)
 def getuserinput():
     if request.method == 'POST':
         data = request.get_json()['userdata']
+        args = request.get_json()['args']
 
         # Data Responses
         error = ""
@@ -20,7 +21,7 @@ def getuserinput():
         mf = ""
         midiBytes = b''
 
-        ah = abcFormat.ABCHandler()
+        # ah = abcFormat.ABCHandler()
 
         try:
             # Experiments with the raw abc notation
@@ -34,17 +35,41 @@ def getuserinput():
             # s1.show('text')
             # abcFormat.translate.abcToStreamScore(newABC)
 
+            #ah = abcFormat.ABCHandler(abcVersion=(2, 1, 0))
+            #ah.process(data)
+            # print(ah.tokens)
+            #abcTextSample = abcFormat.translate.abcToStreamScore(ah)
+
             abcTextSample = converter.parse(data, format='abc')
             for el in abcTextSample.recurse().getElementsByClass(tempo.MetronomeMark):
                 el.number = int(el.number) # Decimals break braille conversion
 
-            #abcTextSample.show('text')
+
+            # Currently includes the number in the output
+            # Not using so this function removes
+            # braille does not include the composer
+            # I think because composer is in a separate "contributors" list?
+            old_m = abcTextSample.metadata.all()
+            abcTextSample.removeByClass(metadata.Metadata)
+            abcTextSample.insert(0, metadata.Metadata())
+            for t in old_m:
+                if t[0] != 'number':
+                    setattr(abcTextSample.metadata, t[0], t[1])
+
+            # Start measure number count at 1 if there is no pickup
+            if not args["hasPickup"]:
+                for p in abcTextSample.parts:
+                    n = 1
+                    for m in p.getElementsByClass('Measure'):
+                        m.number = n
+                        n += 1
 
             # Music XML
             mxml = musicxml.m21ToXml.GeneralObjectExporter(abcTextSample).parse().decode('utf-8').strip()
 
             # Braille
             brailleFile = braille.translate.objectToBraille(abcTextSample)
+            # print(braille.translate.metadataToString(abcTextSample.getElementsByClass('Metadata').first()))
             asciiBraille = braille.basic.brailleUnicodeToBrailleAscii(brailleFile)
 
             # MIDI

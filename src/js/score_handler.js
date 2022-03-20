@@ -78,6 +78,7 @@ class ScoreHandler {
         let section = 0;
         let measureCount = 0;
         let currentMeasure;
+        this.hasPickup = false;
         //console.log(flatList);
         flatList.forEach((o, i) => {
 
@@ -204,13 +205,28 @@ class ScoreHandler {
                         }
                     });
                     m.isComplete = (Math.abs(m.duration - 1) < 0.01 ||
-                                    m.measure == 0);
+                    m.measure == 0);
                     m.comment = m.measure == 0 ? 'Pickup'
-                              : m.duration - 1 > 0.01 ? 'Overfilled'
-                              : m.duration - 1 < -0.01 ? 'Underfilled'
-                              : m.position.length < 2 ? 'No right barline'
-                              : 'Valid'
+                        : m.duration - 1 > 0.01 ? 'Overfilled'
+                        : m.duration - 1 < -0.01 ? 'Underfilled'
+                        : m.position.length < 2 ? 'No right barline'
+                        : 'Valid';
+
+                    // Ensure incomplete measures are accessed by linter by
+                    // adding warnings to error list
+                    if (!m.isComplete || m.position.length < 2) {
+                        this.addError({
+                            position: [
+                                m.position[0],
+                                m.position[1] ? m.position[1] : m.position[0] + 1
+                            ],
+                            name: "Measure",
+                            message: `Measure ${m.measure} is ${m.comment}`
+                        }, 'warning')
+                    }
+
                 });
+
             }
         });
 
@@ -226,7 +242,7 @@ class ScoreHandler {
     }
 
     addError(obj, severity="error") {
-        console.log(obj);
+        // console.log(obj);
         if (obj.position[0] == obj.position[1]) return; // ignore no-character errors
         let newError = {
             from: obj.position[0],
@@ -255,7 +271,10 @@ class ScoreHandler {
                 obj['rawText'] = rawText.replace(errText, '');
             }
         }
-        newError.message = `${errType} '${errSourceText}' can't be processed and is ignored.`;
+        obj.message ?
+            newError.message = obj.message :
+            newError.message = `${errType} '${errSourceText}' can't be processed and is ignored.`;
+
         this.errorList.push(newError);
     }
 
@@ -476,7 +495,8 @@ class ScoreHandler {
             'Chord': this._handleChord,
             'Note': this._handleNote,
             'Rest': this._handleNote,
-            'DottedRhythm': this._handleDotted
+            'DottedRhythm': this._handleDotted,
+            'Decoration': this._handleDecoration
         };
         let name = node.type.name;
 
@@ -495,6 +515,18 @@ class ScoreHandler {
             rawText: editorState.sliceDoc(treeCursor.from, treeCursor.to),
             position: [treeCursor.from, treeCursor.to],
         };
+    }
+
+    _handleDecoration(node, treeCursor, editorState) {
+        let noteObj = this._extractGenericInfo(node, treeCursor, editorState);
+
+        let localCursor = node.cursor;
+        localCursor.firstChild();
+        if (localCursor.node) {
+            noteObj.name = localCursor.node.type.name.split(/(?=[A-Z])/).join(" ");
+        }
+
+        return noteObj;
     }
 
     // Notes and Rests
@@ -524,7 +556,7 @@ class ScoreHandler {
             merged.name = '⚠';
         }
 
-        if ('⚠' in merged) this.addError(merged, 'warning');
+        if ('⚠' in merged) this.addError(merged, 'error');
 
         // Merge so that the included music info overwrites the defaults
         return merged;
@@ -601,7 +633,7 @@ class ScoreHandler {
                 else {
                     let brokenInnerNode = this._extractGenericInfo(localNode, localCursor, editorState);
                     brokenInnerNode.source = "Dot";
-                    this.addError(brokenInnerNode, 'warning');
+                    this.addError(brokenInnerNode, 'error');
                 }
 
             } while (localCursor.nextSibling());
