@@ -22,6 +22,7 @@ def getuserinput():
         midiBytes = b''
 
         # ah = abcFormat.ABCHandler()
+        # print(data)
 
         try:
             # Experiments with the raw abc notation
@@ -64,12 +65,12 @@ def getuserinput():
                         m.number = n
                         n += 1
 
+            # abcTextSample.show('text')
             # Music XML
             mxml = musicxml.m21ToXml.GeneralObjectExporter(abcTextSample).parse().decode('utf-8').strip()
 
             # Braille
             brailleFile = braille.translate.objectToBraille(abcTextSample)
-            # print(braille.translate.metadataToString(abcTextSample.getElementsByClass('Metadata').first()))
             asciiBraille = braille.basic.brailleUnicodeToBrailleAscii(brailleFile)
 
             # MIDI

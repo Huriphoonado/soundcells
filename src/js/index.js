@@ -398,7 +398,7 @@ const sendABC = (abcCode) => {
 
     postData('/data', {
         // Temporary fix for music21 limited dynamic support
-        userdata: abcCode.replace(/!>/g, "!diminuendo").replace(/!</, "!crescendo"),
+        userdata: abcCode.replace(/!>/g, "!diminuendo").replace(/!</g, "!crescendo"),
         args: {hasPickup: hasPickup}
     })
     .then(data => {
