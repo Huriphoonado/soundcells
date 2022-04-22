@@ -66,13 +66,14 @@ $ git checkout -b prod
 ```bash
 $ npm run build
 ```
-5. Push to heroku and check if it's been deployed.
+5. Commit locally. (Don't push to GitHub).
+6. Push to heroku and check if it's been deployed.
 ```bash
-$ git push heroku prod:main
+$ git push --force heroku prod:main
 $ heroku ps:scale web=1
 $ heroku open   
 ```
-6. Switch back to main and remove the temporary branch.
+7. Switch back to main and remove the temporary branch.
 ```bash
 $ git branch -D prod
 ```

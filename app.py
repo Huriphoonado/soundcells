@@ -70,7 +70,8 @@ def getuserinput():
             mxml = musicxml.m21ToXml.GeneralObjectExporter(abcTextSample).parse().decode('utf-8').strip()
 
             # Braille
-            brailleFile = braille.translate.objectToBraille(abcTextSample)
+            brailleFile = braille.translate.objectToBraille(abcTextSample, maxLineLength=50)
+            #brailleFile = ""
             asciiBraille = braille.basic.brailleUnicodeToBrailleAscii(brailleFile)
 
             # MIDI

@@ -458,7 +458,8 @@ document.getElementById("score-zoom").addEventListener('dblclick', (e) => {
 
 
 document.getElementById("showBraille").addEventListener("click", (e) => {
-    document.getElementById('braille').innerHTML = (
+    console.log(state["asciiBraille"]);
+    document.getElementById('braille').innerText = (
         document.getElementById('brailleText1').checked ?
         state["asciiBraille"] : state["unicodeBraille"]) || "";
 });
