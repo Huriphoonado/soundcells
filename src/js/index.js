@@ -46,6 +46,11 @@ let timer; // Only send to flask server at a max interval
 
 const cacher = new Cacher();
 
+// set scroll restoration for whole webpage to manual
+window.history.scrollRestoration = 'manual'
+// GLOBAL VARIABLE to help store/handle scroll position
+const STORAGE_KEY = "score-scroll-position-y"
+
 let textarea = document.getElementById("abctextarea");
 let codeEditorOption = document.getElementById("codeEditor");
 let textareaOption = document.getElementById("textEditor");
@@ -412,9 +417,21 @@ const sendABC = (abcCode) => {
             .then( v => {
                 visualScore.zoom = state.zoomLevel; // zoom value not retained
                 visualScore.render();
+                restoreScrollPosition();
             } )
         }
     })
+}
+
+// save and handle scroll position
+function handleScroll(evt) {
+    window.sessionStorage.setItem(STORAGE_KEY, evt.target.scrollTop);
+}
+
+function restoreScrollPosition() {
+    const score = document.getElementById("score");
+    const y_pos = sessionStorage.getItem(STORAGE_KEY) || 0;
+    score.scrollTo(0,y_pos);
 }
 
 async function postData(url = '', data = {}) {
@@ -434,6 +451,9 @@ async function postData(url = '', data = {}) {
 }
 
 // UI Functionality Setup
+
+// save current scroll position
+document.getElementById('score').addEventListener('scroll', handleScroll)
 
 // Change editor font size
 // Annoying bug - the gutter doesn't update its spacing until the user focuses
