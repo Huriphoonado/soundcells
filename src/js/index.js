@@ -25,6 +25,8 @@ import { Cacher } from "./cacher.js";
 
 import { addAlert } from "./dom_manip.js"
 
+import { getReducedXML } from "./xml_handler.js"
+
 // import { Midi } from '@tonejs/midi';
 
 
@@ -413,7 +415,10 @@ const sendABC = (abcCode) => {
         fileDownloader.setContent('brf', data.asciiBraille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
-            visualScore.load(data.musicxml)
+            let curr_measure = scoreHandler.getCurrentPosition().measures[0].measure;
+            let score_subset = getReducedXML({xml:data.musicxml, curr_measure:curr_measure})
+            // visualScore.load(data.musicxml)
+            visualScore.load(score_subset)
             .then( v => {
                 visualScore.zoom = state.zoomLevel; // zoom value not retained
                 visualScore.render();
