@@ -18,7 +18,6 @@ function getReducedXML(args) {
     for (let i = 1; i < curr_measure; i++) {
         let new_attr = measures[i].getElementsByTagName("attributes")[0];
         if (new_attr) {
-            console.log(new_attr.childNodes);
             // childNodes has strange "text" nodes at the beginning/end/between the nodes we care about, so
             // we are skipping them by starting at index 1 and incrementing by 2 
             for (let j = 1; j < new_attr.childNodes.length; j += 2) {
@@ -30,41 +29,22 @@ function getReducedXML(args) {
                 else {
                     attributes.appendChild(new_attr.childNodes[j].cloneNode(true));
                 }
-                console.log(existing_node);
             }
         }
     }
 
-    // console.log(measures)
-    /*
-    for (let idx = 0; idx < measures.length; idx++) {
-        if (measures[idx].getAttribute("number") != curr_measure) {
-            console.log("I'm here")
-            measures[idx].parentNode.removeChild(measures[idx])
-        }
-        //console.log(measures[idx].getAttribute("number"))
-    }
-    */
-
     let idx = 0;
     while (measures.length > measure_num) {
-        console.log(measures[idx])
         if (measures[idx].getAttribute("number") != curr_measure) {
             measures[idx].parentNode.removeChild(measures[idx])
         }
-        else {
-            idx++
-        }
+        else idx++
     }
 
     let existing_attr = measures[0].getElementsByTagName("attributes")[0];
     if (existing_attr) measures[0].removeChild(existing_attr);
 
-
     measures[0].insertBefore(attributes, measures[0].getElementsByTagName("note")[0]);
-
-    console.log(miniScore)
-
     return miniScore;
 }
 

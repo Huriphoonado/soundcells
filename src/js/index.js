@@ -85,13 +85,9 @@ let startState = EditorState.create({
         linter(lintMusic),
         EditorView.updateListener.of((v) => { // Main Event Handler
             let treeCursor = view.state.tree.cursor();
-            if(v.docChanged) {
-                let output = scoreHandler.generateScoreStructure(treeCursor, view.state);
+            let outputABC;
 
-                // Only post after groups of changes
-                if (timer) clearTimeout(timer);
-                timer = setTimeout(() => sendABC(output.abc), 500 );
-            }
+            if (v.docChanged) outputABC = scoreHandler.generateScoreStructure(treeCursor, view.state).abc;
 
             // Functions to be called after generateScoreStructure
             let currentPosition = scoreHandler.updatePosition(view.state.selection);
@@ -100,6 +96,14 @@ let startState = EditorState.create({
             // Better way to do this? Keymap functions are called before the
             // view is updated so this checks the insertion
             playNoteWhenTyped(scoreHandler, v);
+
+            console.log("state", state);
+
+            if (v.docChanged) { // parse and then render score
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => sendABC(outputABC), 500);
+            }
+            else if (state.musicxml) renderPrintScore(state.musicxml, true) // only update visual score
         }),
     ],
 });
@@ -114,7 +118,7 @@ export let state = {
     orientation: 'P',
     unicodeBraille: "⠠⠝⠥⠍⠃⠑⠗⠒⠀⠼⠁ ⠠⠞⠊⠞⠇⠑⠒⠀⠠⠎⠅⠑⠞⠉⠓ ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠶⠼⠁⠃⠚⠀⠼⠙⠲⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠼⠁⠀⠐⠪⠺⠹⠱⠣⠅",
     asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
-    musicXML: "",
+    musicxml: "",
     zoomLevel: 1,
     errors: [],
 }
@@ -409,23 +413,36 @@ const sendABC = (abcCode) => {
         args: {hasPickup: hasPickup}
     })
     .then(data => {
-        state["unicodeBraille"] = data.braille;
-        state["asciiBraille"] = data.asciiBraille;
-        // document.getElementById('braille').innerHTML = data.braille || "";
+        state.unicodeBraille = data.braille;
+        state.asciiBraille = data.asciiBraille;
+        state.musicxml = data.musicxml;
+
         fileDownloader.setContent('brf', data.asciiBraille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
-            let curr_measure = scoreHandler.getCurrentPosition().measures[0].measure;
-            let score_subset = getReducedXML({xml:data.musicxml, curr_measure:curr_measure})
-            // visualScore.load(data.musicxml)
-            visualScore.load(score_subset)
-            .then( v => {
-                visualScore.zoom = state.zoomLevel; // zoom value not retained
-                visualScore.render();
-                restoreScrollPosition();
-            } )
+            renderPrintScore(data.musicxml, true);
         }
     })
+}
+
+// render the score in svg
+function renderPrintScore(musicxml, showReduced) {
+    let scoreToDisplay;
+    
+    if (showReduced)  scoreToDisplay = getReducedXML({
+        xml: musicxml,
+        curr_measure: scoreHandler.getCurrentPosition().measures[0].measure 
+    });
+    else scoreToDisplay = args.musicxml;
+
+    console.log("in render", scoreHandler.getCurrentPosition().measures[0].measure);
+    
+    visualScore.load(scoreToDisplay)
+        .then(v => {
+            visualScore.zoom = state.zoomLevel; // zoom value not retained
+            visualScore.render();
+            restoreScrollPosition();
+        })
 }
 
 // save and handle scroll position
