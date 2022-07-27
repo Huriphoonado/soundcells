@@ -1,7 +1,9 @@
 function getReducedXML(args) {
     let xml = args.xml || undefined;
     let measure_num = args.measure_num || 1;
-    let curr_measure = args.curr_measure || 1;
+    let curr_measure = (args.curr_measure != undefined) ? args.curr_measure : 1;
+
+    // BUG - this is breaking when there is no pickup and cursor is in front of first measure
 
     let parser = new DOMParser();
     let miniScore = parser.parseFromString(xml,"text/xml");
@@ -13,7 +15,7 @@ function getReducedXML(args) {
 
     let attributes = measures[0].getElementsByTagName("attributes")[0].cloneNode(true);
 
-    console.log(attributes.childNodes)
+    // console.log(attributes.childNodes)
 
     for (let i = 1; i < curr_measure; i++) {
         let new_attr = measures[i].getElementsByTagName("attributes")[0];
@@ -45,6 +47,7 @@ function getReducedXML(args) {
     if (existing_attr) measures[0].removeChild(existing_attr);
 
     measures[0].insertBefore(attributes, measures[0].getElementsByTagName("note")[0]);
+
     return miniScore;
 }
 

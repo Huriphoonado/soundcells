@@ -204,8 +204,7 @@ class ScoreHandler {
                             runningDuration += e.scientificNotation.seconds;
                         }
                     });
-                    m.isComplete = (Math.abs(m.duration - 1) < 0.01 ||
-                    m.measure == 0);
+                    m.isComplete = (Math.abs(m.duration - 1) < 0.01 || m.measure == 0);
                     m.comment = m.measure == 0 ? 'Pickup'
                         : m.duration - 1 > 0.01 ? 'Overfilled'
                         : m.duration - 1 < -0.01 ? 'Underfilled'
@@ -290,18 +289,21 @@ class ScoreHandler {
             let to = selection.ranges[0].to;
             let allMeasures = [];
             let allEvents = [];
-            let allNotes = this.scoreStructure.forEach(section => {
+            
+            this.scoreStructure.forEach(section => {
                 section.measures.forEach(measure => {
                     allMeasures.push(measure);
                     measure.events.forEach(ev => allEvents.push(ev));
                 });
             });
 
-            this.currentPosition.measures = allMeasures.filter(m => {
+            this.currentPosition.measures = allMeasures.filter((m, i) => {
                 let start = m.position[0];
                 let end = (typeof m.position[1] !== "undefined") ? m.position[1]
                         : m.events.slice(-1)[0].position[1];
-                return (from > start && to <= end);
+                
+                        return ( (from >= start && to <= end) || // in measure or after last
+                         (i == allMeasures.length - 1 && from >= start && to >= end) );
             })
 
             this.currentPosition.events = allEvents.filter(ev => {
@@ -330,8 +332,11 @@ class ScoreHandler {
         .forEach(s => {
             for (const k in s.metadata) { abcOutput += `${k}:${s.metadata[k]}\n` };
             if (s.measures) {
-                s.measures.forEach(m => {
-                    m.events.forEach(ev => abcOutput += ev.rawText.replace(/\s+/g, ''));
+                s.measures.forEach((m, i) => {
+                    if (m.events.length) {
+                        m.events.forEach(ev => abcOutput += ev.rawText.replace(/\s+/g, ''));
+                    } else if (i != 0) abcOutput += 'z'; // fill empty measures to improve render
+                    
                     if (m.barlines[1]) abcOutput += m.barlines[1];
                     else if (m.position.length == 2) abcOutput += m.barlines[0];
                 });

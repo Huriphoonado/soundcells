@@ -97,9 +97,7 @@ let startState = EditorState.create({
             // view is updated so this checks the insertion
             playNoteWhenTyped(scoreHandler, v);
 
-            console.log("state", state);
-
-            if (v.docChanged) { // parse and then render score
+            if (v.docChanged) { // only send, retrieve, and render on timer
                 if (timer) clearTimeout(timer);
                 timer = setTimeout(() => sendABC(outputABC), 500);
             }
@@ -401,11 +399,8 @@ const sendABC = (abcCode) => {
     // Fix for music21 not handling measure numbers for pickups
     let hasPickup = true;
     if (scoreHandler.scoreStructure[0].measures) {
-        console.log(scoreHandler.scoreStructure[0].measures[0])
         hasPickup = !!scoreHandler.scoreStructure[0].measures[0].duration;
     }
-
-    console.log();
 
     postData('/data', {
         // Temporary fix for music21 limited dynamic support
@@ -434,8 +429,6 @@ function renderPrintScore(musicxml, showReduced) {
         curr_measure: scoreHandler.getCurrentPosition().measures[0].measure 
     });
     else scoreToDisplay = args.musicxml;
-
-    console.log("in render", scoreHandler.getCurrentPosition().measures[0].measure);
     
     visualScore.load(scoreToDisplay)
         .then(v => {
