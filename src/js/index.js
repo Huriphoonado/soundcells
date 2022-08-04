@@ -101,7 +101,7 @@ let startState = EditorState.create({
                 if (timer) clearTimeout(timer);
                 timer = setTimeout(() => sendABC(outputABC), 500);
             }
-            else if (state.musicxml) renderPrintScore(state.musicxml, true) // only update visual score
+            else if (state.musicxml) renderPrintScore(state.musicxml, state.showReduced) // only update visual score
         }),
     ],
 });
@@ -118,6 +118,7 @@ export let state = {
     asciiBraille: `,NUMBER3 #A ,TITLE3 ,SKETCH ?7#ABJ #D4 #A "[W?:`,
     musicxml: "",
     zoomLevel: 1,
+    showReduced: false,
     errors: [],
 }
 // Open Sheet Music Display
@@ -415,7 +416,7 @@ const sendABC = (abcCode) => {
         fileDownloader.setContent('brf', data.asciiBraille);
         if (data.musicxml) {
             fileDownloader.setContent('xml', data.musicxml);
-            renderPrintScore(data.musicxml, true);
+            renderPrintScore(data.musicxml, state.showReduced);
         }
     })
 }
@@ -428,7 +429,7 @@ function renderPrintScore(musicxml, showReduced) {
         xml: musicxml,
         curr_measure: scoreHandler.getCurrentPosition().measures[0].measure 
     });
-    else scoreToDisplay = args.musicxml;
+    else scoreToDisplay = musicxml;
     
     visualScore.load(scoreToDisplay)
         .then(v => {
@@ -531,6 +532,17 @@ document.getElementById('submitButton').addEventListener("click", (e) => {
     let fullURL = `${rootURL}${prepop}${abcURL}`.substring(0, 2040);
 
     window.open(fullURL, "_blank");
+})
+
+// Control for score display, full/reduced
+document.getElementById("reducedScore1").addEventListener("change", (e) => {
+    state.showReduced = false;
+    renderPrintScore(state.musicxml, state.showReduced);
+})
+
+document.getElementById("reducedScore2").addEventListener("change", (e) => {
+    state.showReduced = true;
+    renderPrintScore(state.musicxml, state.showReduced);
 })
 
 // Events for Generic HTML Text Area
