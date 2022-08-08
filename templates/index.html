@@ -46,6 +46,7 @@
                 </div>
                 <div class="row pb-4">
                     <div id="score" class="bg-light card" style="min-height:200px; max-height: 40vh; overflow-y:auto; overflow-x:hidden;"></div>
+                    <!-- FULL/REDUCED RADIO BUTTONS -->
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="reducedScoreOptions" id="reducedScore1" value="full" checked>
                         <label class="form-check-label" for="reducedScore1">Full</label>
@@ -54,6 +55,20 @@
                         <input class="form-check-input" type="radio" name="reducedScoreOptions" id="reducedScore2" value="reduced">
                         <label class="form-check-label" for="reducedScore2">Reduced</label>
                     </div>
+                    <!-- ZOOM SLIDER -->
+                    <div class="col-sm">
+                        <label for="score-zoom" class="form-label">Score Size (double click to reset)</label>
+                        <input type="range" class="form-range" id="score-zoom" min="10" max="90" value="50" />
+                    </div>
+                    <!-- MEASURE NUMBER DROPDOWN MENU -->
+                    <div class="py-2">
+                        <h6 class="offcanvas-title">Number of Measures</h6>
+                            <select id="reducedMeasureSelect" class="form-select" aria-label="Reduced Mode Measure Select">
+                                <option selected value="1">1</option>
+                                <option value="3">3</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
                 </div>
             </main>
         </div>
