@@ -1,7 +1,9 @@
 function getReducedXML(args) {
     let xml = args.xml || undefined;
-    let measure_num = args.measure_num || 1;
+    let measure_num = args.measure_num || 3;
     let curr_measure = (args.curr_measure != undefined) ? args.curr_measure : 1;
+    let hasPickup = args.hasPickup || false;
+    let measureLength = args.measureLength || 1;
 
     // BUG - this is breaking when there is no pickup and cursor is in front of first measure
 
@@ -35,12 +37,29 @@ function getReducedXML(args) {
         }
     }
 
+    // for idx = curr - (meas_num // 2), idx <= curr + meas_num // 2, idx ++, array.push(idx)
+    let measure_slice = [...Array(measure_num) ].map((v, i) => i - Math.trunc(measure_num / 2) + curr_measure)
+        .filter(v => v > !hasPickup - 1 && v <= measureLength);
+    /* for (let idx = (curr_measure - Math.floor(measure_num / 2)); idx <= (curr_measure + Math.floor(measure_num / 2)); idx++) {
+        measure_slice.push(idx)
+    } */
+    console.log(measure_slice);
+
     let idx = 0;
-    while (measures.length > measure_num) {
-        if (measures[idx].getAttribute("number") != curr_measure) {
+    while (measures.length > measure_slice.length) {
+        /* if (measures[idx].getAttribute("number") != curr_measure) {
             measures[idx].parentNode.removeChild(measures[idx])
         }
-        else idx++
+        else idx++ */
+        // console.log("Checking measure slice:", measure_slice)
+        // console.log("Checking current measure number", measures[idx].getAttribute("number"))
+        // console.log("Checking if measure number is in measure slice", measure_slice.includes(Number(measures[idx].getAttribute("number"))))
+        if (measure_slice.includes(Number(measures[idx].getAttribute("number")))) {
+            idx++
+        }
+        else {
+            measures[idx].parentNode.removeChild(measures[idx])
+        }
     }
 
     let existing_attr = measures[0].getElementsByTagName("attributes")[0];

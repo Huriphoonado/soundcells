@@ -18,6 +18,7 @@ class ScoreHandler {
             music: "| z4 |]"
         }
 
+        this.hasPickup = false;
         this.scoreStructure = [];
         this.errorList = [];
 
@@ -320,6 +321,12 @@ class ScoreHandler {
     }
 
     getCurrentPosition() { return this.currentPosition }
+
+    getScoreProperties() {
+        return {hasPickup: this.hasPickup,
+            measureLength: this.scoreStructure[this.scoreStructure.length - 1]
+            .measures[this.scoreStructure[this.scoreStructure.length - 1].measures.length - 1].measure}
+    }
 
     // Iterate through the store structure and generate an error-free
     // score string

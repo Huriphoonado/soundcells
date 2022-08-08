@@ -119,6 +119,7 @@ export let state = {
     musicxml: "",
     zoomLevel: 1,
     showReduced: false,
+    reducedMeasures: 1,
     errors: [],
 }
 // Open Sheet Music Display
@@ -424,10 +425,14 @@ const sendABC = (abcCode) => {
 // render the score in svg
 function renderPrintScore(musicxml, showReduced) {
     let scoreToDisplay;
+    let scoreProperties = scoreHandler.getScoreProperties()
     
     if (showReduced)  scoreToDisplay = getReducedXML({
         xml: musicxml,
-        curr_measure: scoreHandler.getCurrentPosition().measures[0].measure 
+        measure_num : state.reducedMeasures,
+        curr_measure: scoreHandler.getCurrentPosition().measures[0].measure,
+        hasPickup: scoreProperties.hasPickup,
+        measureLength: scoreProperties.measureLength
     });
     else scoreToDisplay = musicxml;
     
@@ -544,6 +549,13 @@ document.getElementById("reducedScore2").addEventListener("change", (e) => {
     state.showReduced = true;
     renderPrintScore(state.musicxml, state.showReduced);
 })
+
+// Control of # of measures, 1 3 or 5
+document.getElementById("reducedMeasureSelect").addEventListener("change", (e) => {
+    state.reducedMeasures = Number(e.target.value);
+    console.log(state.reducedMeasures);
+    renderPrintScore(state.musicxml, state.showReduced);
+});
 
 // Events for Generic HTML Text Area
 codeEditorOption.addEventListener("change", (e) => {
